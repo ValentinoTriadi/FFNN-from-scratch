@@ -7,19 +7,19 @@ class LossFunction:
     def __init__(self, fungsi_loss: str):
         self.fungsi_loss = fungsi_loss
 
-    def hitung_loss(self, y_pred, y_true):
+    def get_lost_function(self):
         if self.fungsi_loss == "MSE":
-            return self.mse(y_pred, y_true)
+            return self.mse
         elif self.fungsi_loss == "BinaryCrossEntropy":
-            return self.binarycrossentropy(y_pred, y_true)
+            return self.binarycrossentropy
         elif self.fungsi_loss == "CategoricalCrossEntropy":
-            return self.categoricalcrossentropy(y_pred, y_true)
+            return self.categoricalcrossentropy
         else:
             raise ValueError("Fungsi loss tidak valid")
 
     def mse(self, y_pred, y_true):
-        # TODO: Implementasi MSE
-        pass
+        sse = np.sum((y_pred - y_true)[0] ** 2)
+        return sse / y_pred.shape[0]
 
     def binarycrossentropy(self, y_pred, y_true):
         # TODO: Implementasi Binary Cross Entropy

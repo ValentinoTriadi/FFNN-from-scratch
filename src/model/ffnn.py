@@ -25,6 +25,23 @@ class FFNN:
     @param inisialisasi_bobot: str
         Metode inisialisasi bobot
         ['zero', 'uniform', 'normal']
+
+    Optional Param:
+    -- Weight Initiation -> uniform --
+    @param lower_bound: float
+        Batas bawah nilai random
+    @param upper_bound: float
+        Batas atas nilai random
+    @param seed: int
+        Seed untuk reproducibility
+
+    -- Weight Initiation -> normal --
+    @param mean: float
+        Mean dari distribusi normal
+    @param std: float
+        Standar deviasi dari distribusi normal
+    @param seed: int
+        Seed untuk reproducibility
     """
 
     def __init__(
@@ -34,74 +51,107 @@ class FFNN:
         fungsi_aktivasi: list[str],
         fungsi_loss: str,
         inisialisasi_bobot: str,
+        lower_bound: float = -1.0,
+        upper_bound: float = 1.0,
+        mean: float = 0.0,
+        std: float = 1.0,
+        seed: int = 0,
     ):
-        # Validasi input
-        try:
-            self.validate_input(
-                jumlah_layer,
-                jumlah_neuron,
-                fungsi_aktivasi,
-                fungsi_loss,
-                inisialisasi_bobot,
-            )
-        except ValueError as e:
-            print(e)
-            return
 
         self.jumlah_layer = jumlah_layer
         self.jumlah_neuron = jumlah_neuron
-        self.fungsi_aktivasi = fungsi_aktivasi
-        self.fungsi_loss = fungsi_loss
-        self.inisialisasi_bobot = inisialisasi_bobot
+        self.fungsi_aktivasi_str = fungsi_aktivasi
+        self.fungsi_loss_str = fungsi_loss
+        self.inisialisasi_bobot_str = inisialisasi_bobot
+
+        # Validasi input
+        try:
+            self.validate_input()
+        except ValueError as e:
+            print(f"\033[91m{e}\033[0m")
+            exit()
+
+        self.fungsi_aktivasi_class = ActivationFunction(fungsi_aktivasi)
+        self.fungsi_loss_class = LossFunction(fungsi_loss)
+        self.inisialisasi_bobot_class = WeightInitiation(
+            inisialisasi_bobot, jumlah_layer, jumlah_neuron
+        )
 
         # Inisialisasi bobot
-        # TODO: Implementasi inisialisasi bobot
-        self.bobot = []
-
-        # inisialisasi bias
-        # TODO: Implementasi inisialisasi bias
-        self.bias = []
+        # ? Bias dimasukkan ke dalam bobot indeks terakhir
+        self.bobot = self.inisialisasi_bobot_class.init_weights()
 
         # inisialisasi fungsi aktivasi
-        # TODO: Implementasi inisialisasi fungsi aktivasi
-        # ? import dari class ActivationFunction
-        self.fungsi_aktivasi = []
+        self.fungsi_aktivasi = list(
+            self.fungsi_aktivasi_class.get_batch_activation_function()
+        )
 
         # inisialisasi fungsi loss
-        # TODO: Implementasi inisialisasi fungsi loss
-        # ? import dari class LossFunction
-        self.fungsi_loss = None
+        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
 
-    def validate_input(
-        self,
-        jumlah_layer: int,
-        jumlah_neuron: list[int],
-        fungsi_aktivasi: list[str],
-        fungsi_loss: str,
-        inisialisasi_bobot: str,
-    ):
-        if jumlah_layer < 2:
+        print("Model berhasil diinisialisasi")
+
+    def __str__(self):
+        ret = ""
+        ret += "\033[92m\nModel Feed Forward Neural Network\033[0m"
+        ret += "\033[92m\nJumlah Layer: \033[0m" + str(self.jumlah_layer)
+        ret += "\033[92m\nJumlah Neuron: \033[0m" + str(self.jumlah_neuron)
+        ret += "\033[92m\nFungsi Aktivasi: \033[0m" + str(self.fungsi_aktivasi_str)
+        ret += "\033[92m\nFungsi Loss: \033[0m" + str(self.fungsi_loss_str)
+        ret += "\033[92m\nInisialisasi Bobot: \033[0m" + str(
+            self.inisialisasi_bobot_str
+        )
+        ret += "\033[92m\nBobot: \033[0m"
+        for i in range(len(self.bobot)):
+            ret += "\033[93m\nLayer " + str(i) + ":\033[0m\n" + str(self.bobot[i])
+        ret += "\033[92m\nHasil: \033[0m"
+        for i in range(len(self.hasil)):
+            ret += "\033[93m\nEpoch " + str(i) + ":\033[0m"
+            for j in range(len(self.hasil[i])):
+                ret += (
+                    "\033[94m\nLayer " + str(j) + ":\033[0m\n" + str(self.hasil[i][j])
+                )
+            ret += "\n"
+        ret += "\033[92m\nLoss: \033[0m" + str(self.loss)
+        ret += "\033[92m\nX: \033[0m" + str(self.X)
+        ret += "\033[92m\ny: \033[0m" + str(self.y)
+        ret += "\033[92m\nLearning Rate: \033[0m" + str(self.lr)
+        return ret
+
+    def validate_input(self):
+        if self.jumlah_layer < 2:
             raise ValueError("Jumlah layer minimal 2")
-        if len(jumlah_neuron) != jumlah_layer:
+        if len(self.jumlah_neuron) != self.jumlah_layer:
             raise ValueError(
                 "Panjang list jumlah neuron tidak sesuai dengan jumlah layer"
             )
-        if len(fungsi_aktivasi) != jumlah_layer:
+        if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
             raise ValueError(
                 "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
             )
-        for i in range(jumlah_layer):
-            if fungsi_aktivasi[i] not in global_fungsi_aktivasi:
+        for i in range(self.jumlah_layer):
+            if self.fungsi_aktivasi_str[i] not in global_fungsi_aktivasi:
                 raise ValueError(
                     "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
                 )
-        if fungsi_loss not in global_fungsi_loss:
+        if self.fungsi_loss_str not in global_fungsi_loss:
             raise ValueError("Fungsi loss tidak valid")
-        if inisialisasi_bobot not in global_inisialisasi_bobot:
+        if self.inisialisasi_bobot_str not in global_inisialisasi_bobot:
             raise ValueError("Metode inisialisasi bobot tidak valid")
+        if (
+            hasattr(self, "y")
+            and self.y is not None
+            and self.y.shape[0] != self.jumlah_neuron[-1]
+        ):
+            raise ValueError("Jumlah neuron pada layer terakhir tidak sesuai dengan y")
         return True
 
-    def forward(self, X: np.ndarray):
+    def print_bobot(self):
+        for i in range(self.jumlah_layer):
+            print("Layer ke-", i)
+            print(self.bobot[i])
+
+    def forward(self):
         """
         Melakukan feed forward pada model
 
@@ -110,7 +160,30 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
-        pass
+        for i in range(self.jumlah_layer):
+            print("Bobot ke-", i)
+            if i == 0:
+                XWithBias = np.vstack((self.X, np.ones((1, self.X.shape[1]))))
+                self.hasil[self.current_epoch][i] = np.matmul(
+                    np.matrix_transpose(self.bobot[i]), XWithBias
+                )
+            else:
+                XWithBias = np.vstack(
+                    (
+                        self.hasil[self.current_epoch][i - 1],
+                        np.ones((1, self.hasil[self.current_epoch][i - 1].shape[1])),
+                    )
+                )
+                self.hasil[self.current_epoch][i] = np.matmul(
+                    np.matrix_transpose(self.bobot[i]), XWithBias
+                )
+            self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
+                self.hasil[self.current_epoch][i]
+            )
+
+        self.loss[self.current_epoch] = self.fungsi_loss(
+            self.hasil[self.current_epoch][-1], self.y
+        )
 
     def backward(self, X: np.ndarray, y: np.ndarray):
         """
@@ -159,7 +232,22 @@ class FFNN:
             0 = Tidak menampilkan apa-apa
             1 = Menampilkan progress bar
         """
-        pass
+        self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0])
+        self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
+        self.loss = np.zeros(epoch)
+        self.X = X
+        self.y = y
+        self.lr = lr
+        try:
+            self.validate_input()
+        except ValueError as e:
+            print(f"\033[91m{e}\033[0m")
+            exit()
+        for i in range(epoch):
+            self.current_epoch = i
+            if verbose == 1:
+                print("Epoch ke-", i)
+            self.forward()
 
     def predict(self, X: np.ndarray):
         """

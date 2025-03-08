@@ -44,7 +44,7 @@ class ActivationFunction:
         # TODO: Implementasi turunan softmax
         return x
 
-    def get_activation_function(self, fungsi_aktivasi):
+    def get_activation_function(self, fungsi_aktivasi: str):
         match fungsi_aktivasi:
             case "Linear":
                 return self.linear
@@ -73,7 +73,7 @@ class ActivationFunction:
                 return self.tanh_derivative
             case "Softmax":
                 return self.softmax_derivative
-            
+
     def get_batch_activation_derivative(self):
         for i in range(len(self.fungsi_aktivasi)):
             yield self.get_activation_derivative(self.fungsi_aktivasi[i])
