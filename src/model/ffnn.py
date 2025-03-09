@@ -138,12 +138,19 @@ class FFNN:
             raise ValueError("Fungsi loss tidak valid")
         if self.inisialisasi_bobot_str not in global_inisialisasi_bobot:
             raise ValueError("Metode inisialisasi bobot tidak valid")
-        if (
-            hasattr(self, "y")
-            and self.y is not None
-            and self.y.shape[0] != self.jumlah_neuron[-1]
-        ):
-            raise ValueError("Jumlah neuron pada layer terakhir tidak sesuai dengan y")
+        if hasattr(self, "y") and self.y is not None:
+            if self.y.shape[0] != self.jumlah_neuron[-1]:
+                raise ValueError(
+                    "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
+                )
+            if hasattr(self, "X") and self.X is not None:
+                if self.X.shape != self.y.shape:
+                    raise ValueError(
+                        "Bentuk X tidak sesuai dengan y. X: "
+                        + str(self.X.shape)
+                        + " y: "
+                        + str(self.y.shape)
+                    )
         return True
 
     def print_bobot(self):
@@ -161,7 +168,6 @@ class FFNN:
             Output dari model
         """
         for i in range(self.jumlah_layer):
-            print("Bobot ke-", i)
             if i == 0:
                 XWithBias = np.vstack((self.X, np.ones((1, self.X.shape[1]))))
                 self.hasil[self.current_epoch][i] = np.matmul(
@@ -246,7 +252,7 @@ class FFNN:
         for i in range(epoch):
             self.current_epoch = i
             if verbose == 1:
-                print("Epoch ke-", i)
+                print("\033[92mEpoch ke-", i, "\033[0m")
             self.forward()
 
     def predict(self, X: np.ndarray):

@@ -18,7 +18,7 @@ class LossFunction:
             raise ValueError("Fungsi loss tidak valid")
 
     def mse(self, y_pred, y_true):
-        sse = np.sum((y_pred - y_true)[0] ** 2)
+        sse = np.sum((y_pred - y_true) ** 2)
         return sse / y_pred.shape[0]
 
     def binarycrossentropy(self, y_pred, y_true):
