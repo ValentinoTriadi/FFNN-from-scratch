@@ -1,4 +1,5 @@
 import numpy as np
+from torch import nn, randn, tensor
 
 global_fungsi_loss = ["MSE", "BinaryCrossEntropy", "CategoricalCrossEntropy"]
 
@@ -18,8 +19,12 @@ class LossFunction:
             raise ValueError("Fungsi loss tidak valid")
 
     def mse(self, y_pred, y_true):
-        sse = np.sum((y_pred - y_true) ** 2)
-        return sse / y_pred.shape[1]
+        input = tensor(y_pred)
+        target = tensor(y_true)
+
+        loss = nn.MSELoss()
+        mse_torch = loss(input, target)
+        return mse_torch
 
     def binarycrossentropy(self, y_pred, y_true):
         # TODO: Implementasi Binary Cross Entropy
