@@ -9,7 +9,7 @@ def main():
         jumlah_neuron=[2, 10, 4],
         fungsi_aktivasi=["Sigmoid", "Sigmoid", "Sigmoid"],
         fungsi_loss="MSE",
-        inisialisasi_bobot="normal",
+        inisialisasi_bobot="uniform",
         seed=123123,
         lower_bound=-1,
         upper_bound=1,

@@ -107,7 +107,10 @@ class FFNN:
         )
         ret += "\033[92m\nBobot: \033[0m"
         for i in range(len(self.bobot)):
-            ret += "\033[93m\nLayer " + str(i) + ":\033[0m\n" + str(self.bobot[i])
+            ret += "\n\033[93mEpoch " + str(i) + ":\033[0m"
+            for j in range(len(self.bobot[i])):
+                ret += "\n\033[94mLayer " + str(j) + ":\033[0m\n"
+                ret += str(self.bobot[i][j])
         ret += "\033[92m\nHasil: \033[0m"
         for i in range(len(self.hasil)):
             ret += "\033[93m\nEpoch " + str(i) + ":\033[0m"
@@ -180,7 +183,7 @@ class FFNN:
                     )
                 )
                 self.hasil[self.current_epoch][i] = np.matmul(
-                    np.matrix_transpose(self.bobot[i]), XWithBias
+                    np.matrix_transpose(self.bobot[self.current_epoch][i]), XWithBias
                 )
             else:
                 XWithBias = np.vstack(
@@ -190,7 +193,7 @@ class FFNN:
                     )
                 )
                 self.hasil[self.current_epoch][i] = np.matmul(
-                    np.matrix_transpose(self.bobot[i]), XWithBias
+                    np.matrix_transpose(self.bobot[self.current_epoch][i]), XWithBias
                 )
             self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
                 self.hasil[self.current_epoch][i]
@@ -249,13 +252,14 @@ class FFNN:
         """
         # Init Bobot
         if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0])
+            self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0], epoch)
         elif self.inisialisasi_bobot_str == "uniform":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 input_count=X.shape[0],
                 low=self.lower_bound,
                 high=self.upper_bound,
                 seed=self.seed,
+                epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == "normal":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
@@ -263,6 +267,7 @@ class FFNN:
                 mean=self.mean,
                 std=self.std,
                 seed=self.seed,
+                epoch=epoch,
             )
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")

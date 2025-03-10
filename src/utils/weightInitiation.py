@@ -19,6 +19,7 @@ class WeightInitiation:
     def init_weights(
         self,
         input_count: int = 1,
+        epoch: int = 1,
         low: float = -1.0,
         high: float = 1.0,
         mean: float = 0,
@@ -26,52 +27,61 @@ class WeightInitiation:
         seed: int = 0,
     ):
         if self.model == "zero":
-            return self.zero(input_count)
+            return self.zero(input_count, epoch)
         elif self.model == "uniform":
             print("low", low)
             print("high", high)
             print("seed", seed)
-            return self.uniform(input_count, low=low, high=high, seed=seed)
+            return self.uniform(input_count, epoch, low=low, high=high, seed=seed)
         elif self.model == "normal":
-            return self.normal(input_count, mean=mean, std=std, seed=seed)
+            return self.normal(input_count, epoch, mean=mean, std=std, seed=seed)
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")
 
-    def zero(self, input_count: int):
+    def zero(self, input_count: int, epoch: int):
         return [
-            np.zeros(
-                (
-                    input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
+            [
+                np.zeros(
+                    (
+                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    )
                 )
-            )
-            for i in range(self.jumlah_layer)
+                for i in range(self.jumlah_layer)
+            ]
+            for j in range(epoch)
         ]
 
-    def uniform(self, input_count: int, low: float, high: float, seed: int):
+    def uniform(self, input_count: int, epoch: int, low: float, high: float, seed: int):
         np.random.seed(seed)
         return [
-            np.random.uniform(
-                low,
-                high,
-                (
-                    input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )
-            for i in range(self.jumlah_layer)
+            [
+                np.random.uniform(
+                    low,
+                    high,
+                    (
+                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(self.jumlah_layer)
+            ]
+            for j in range(epoch)
         ]
 
-    def normal(self, input_count: int, mean: float, std: float, seed: int):
+    def normal(self, input_count: int, epoch: int, mean: float, std: float, seed: int):
         np.random.seed(seed)
         return [
-            np.random.normal(
-                mean,
-                std,
-                (
-                    input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )
-            for i in range(self.jumlah_layer)
+            [
+                np.random.normal(
+                    mean,
+                    std,
+                    (
+                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(self.jumlah_layer)
+            ]
+            for j in range(epoch)
         ]
