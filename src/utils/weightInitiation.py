@@ -38,7 +38,7 @@ class WeightInitiation:
     def zero(self, input_count: int, epoch: int):
         return [
             [
-                np.ones(
+                np.zeros(
                     (
                         self.jumlah_neuron[i - 1] + 1,
                         self.jumlah_neuron[i],
