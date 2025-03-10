@@ -79,7 +79,11 @@ class FFNN:
 
         # Inisialisasi bobot
         # ? Bias dimasukkan ke dalam bobot indeks terakhir
-        self.bobot = self.inisialisasi_bobot_class.init_weights()
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.mean = mean
+        self.std = std
+        self.seed = seed
 
         # inisialisasi fungsi aktivasi
         self.fungsi_aktivasi = list(
@@ -238,7 +242,16 @@ class FFNN:
             0 = Tidak menampilkan apa-apa
             1 = Menampilkan progress bar
         """
-        self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0])
+        # Init Bobot
+        if self.inisialisasi_bobot_str == "zero":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0])
+        elif self.inisialisasi_bobot_str == "uniform":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=X.shape[0],
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+            )
         self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
         self.loss = np.zeros(epoch)
         self.X = X
