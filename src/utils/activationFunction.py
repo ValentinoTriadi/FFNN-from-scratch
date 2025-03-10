@@ -61,7 +61,7 @@ class ActivationFunction:
         for i in range(len(self.fungsi_aktivasi)):
             yield self.get_activation_function(self.fungsi_aktivasi[i])
 
-    def get_activation_derivative(self, fungsi_aktivasi):
+    def get_activation_derivative(self, fungsi_aktivasi: str):
         match fungsi_aktivasi:
             case "Linear":
                 return self.linear_derivative

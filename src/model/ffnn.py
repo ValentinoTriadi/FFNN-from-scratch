@@ -148,7 +148,7 @@ class FFNN:
                     "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
                 )
             if hasattr(self, "X") and self.X is not None:
-                if self.X.shape != self.y.shape:
+                if self.X.shape[1] != self.y.shape[1]:
                     raise ValueError(
                         "Bentuk X tidak sesuai dengan y. X: "
                         + str(self.X.shape)
@@ -173,15 +173,20 @@ class FFNN:
         """
         for i in range(self.jumlah_layer):
             if i == 0:
-                XWithBias = np.vstack((self.X, np.ones((1, self.X.shape[1]))))
+                XWithBias = np.vstack(
+                    (
+                        np.ones((1, self.X.shape[1])),
+                        self.X,
+                    )
+                )
                 self.hasil[self.current_epoch][i] = np.matmul(
                     np.matrix_transpose(self.bobot[i]), XWithBias
                 )
             else:
                 XWithBias = np.vstack(
                     (
-                        self.hasil[self.current_epoch][i - 1],
                         np.ones((1, self.hasil[self.current_epoch][i - 1].shape[1])),
+                        self.hasil[self.current_epoch][i - 1],
                     )
                 )
                 self.hasil[self.current_epoch][i] = np.matmul(
@@ -262,16 +267,19 @@ class FFNN:
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")
 
+        # Init Model Fit
         self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
         self.loss = np.zeros(epoch)
         self.X = X
         self.y = y
         self.lr = lr
+
         try:
             self.validate_input()
         except ValueError as e:
             print(f"\033[91m{e}\033[0m")
             exit()
+
         for i in range(epoch):
             self.current_epoch = i
             if verbose == 1:
