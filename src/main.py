@@ -9,10 +9,12 @@ def main():
         jumlah_neuron=[2, 10, 4],
         fungsi_aktivasi=["Sigmoid", "Sigmoid", "Sigmoid"],
         fungsi_loss="MSE",
-        inisialisasi_bobot="uniform",
-        seed=2000,
+        inisialisasi_bobot="normal",
+        seed=123123,
         lower_bound=-1,
         upper_bound=1,
+        mean=0,
+        std=1,
     )
 
     x = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])

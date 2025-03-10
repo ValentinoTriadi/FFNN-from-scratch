@@ -252,6 +252,16 @@ class FFNN:
                 high=self.upper_bound,
                 seed=self.seed,
             )
+        elif self.inisialisasi_bobot_str == "normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=X.shape[0],
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
         self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
         self.loss = np.zeros(epoch)
         self.X = X

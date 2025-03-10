@@ -17,7 +17,13 @@ class WeightInitiation:
         self.jumlah_neuron = jumlah_neuron
 
     def init_weights(
-        self, input_count: int = 1, low: float = -1.0, high: float = 1.0, seed: int = 0
+        self,
+        input_count: int = 1,
+        low: float = -1.0,
+        high: float = 1.0,
+        mean: float = 0,
+        std: float = 0,
+        seed: int = 0,
     ):
         if self.model == "zero":
             return self.zero(input_count)
@@ -25,9 +31,9 @@ class WeightInitiation:
             print("low", low)
             print("high", high)
             print("seed", seed)
-            return self.uniform(input_count, low, high, seed)
+            return self.uniform(input_count, low=low, high=high, seed=seed)
         elif self.model == "normal":
-            return self.normal(input_count)
+            return self.normal(input_count, mean=mean, std=std, seed=seed)
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")
 
@@ -56,6 +62,16 @@ class WeightInitiation:
             for i in range(self.jumlah_layer)
         ]
 
-    def normal(self, input_count: int):
-        # TODO: Implementasi inisialisasi bobot dengan nilai random normal
-        pass
+    def normal(self, input_count: int, mean: float, std: float, seed: int):
+        np.random.seed(seed)
+        return [
+            np.random.normal(
+                mean,
+                std,
+                (
+                    input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                    self.jumlah_neuron[i],
+                ),
+            )
+            for i in range(self.jumlah_layer)
+        ]
