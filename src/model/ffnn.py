@@ -12,10 +12,8 @@ class FFNN:
     """
     Kelas untuk menampung model Feed Forward Neural Network
 
-    @param jumlah_layer: int
-        Jumlah layer pada model
     @param jumlah_neuron: list[int]
-        Jumlah neuron pada tiap layer
+        Jumlah neuron pada tiap layer (termasuk input dan output)
     @param fungsi_aktivasi: list[str]
         Fungsi aktivasi pada tiap layer
         ['Linear', 'Sigmoid', 'ReLU', 'Tanh', 'Softmax']
@@ -46,7 +44,6 @@ class FFNN:
 
     def __init__(
         self,
-        jumlah_layer: int,
         jumlah_neuron: list[int],
         fungsi_aktivasi: list[str],
         fungsi_loss: str,
@@ -58,8 +55,8 @@ class FFNN:
         seed: int = 0,
     ):
 
-        self.jumlah_layer = jumlah_layer
         self.jumlah_neuron = jumlah_neuron
+        self.jumlah_layer = len(jumlah_neuron) - 1
         self.fungsi_aktivasi_str = fungsi_aktivasi
         self.fungsi_loss_str = fungsi_loss
         self.inisialisasi_bobot_str = inisialisasi_bobot
@@ -74,7 +71,7 @@ class FFNN:
         self.fungsi_aktivasi_class = ActivationFunction(fungsi_aktivasi)
         self.fungsi_loss_class = LossFunction(fungsi_loss)
         self.inisialisasi_bobot_class = WeightInitiation(
-            inisialisasi_bobot, jumlah_layer, jumlah_neuron
+            inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
         )
 
         # Inisialisasi bobot
@@ -127,11 +124,7 @@ class FFNN:
 
     def validate_input(self):
         if self.jumlah_layer < 2:
-            raise ValueError("Jumlah layer minimal 2")
-        if len(self.jumlah_neuron) != self.jumlah_layer:
-            raise ValueError(
-                "Panjang list jumlah neuron tidak sesuai dengan jumlah layer"
-            )
+            raise ValueError("Jumlah layer minimal 3")
         if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
             raise ValueError(
                 "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
@@ -150,14 +143,10 @@ class FFNN:
                 raise ValueError(
                     "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
                 )
-            if hasattr(self, "X") and self.X is not None:
-                if self.X.shape[1] != self.y.shape[1]:
-                    raise ValueError(
-                        "Bentuk X tidak sesuai dengan y. X: "
-                        + str(self.X.shape)
-                        + " y: "
-                        + str(self.y.shape)
-                    )
+        if hasattr(self, "X") and self.X is not None:
+            if self.X.shape[1] != self.jumlah_neuron[0]:
+                raise ValueError("Jumlah neuron pada layer input tidak sesuai dengan X")
+
         return True
 
     def print_bobot(self):
@@ -176,24 +165,26 @@ class FFNN:
         """
         for i in range(self.jumlah_layer):
             if i == 0:
-                XWithBias = np.vstack(
+                XWithBias = np.hstack(
                     (
-                        np.ones((1, self.X.shape[1])),
+                        np.ones((self.X.shape[0], 1)),
                         self.X,
                     )
                 )
                 self.hasil[self.current_epoch][i] = np.matmul(
-                    np.matrix_transpose(self.bobot[self.current_epoch][i]), XWithBias
+                    XWithBias,
+                    self.bobot[self.current_epoch][i],
                 )
             else:
-                XWithBias = np.vstack(
+                XWithBias = np.hstack(
                     (
-                        np.ones((1, self.hasil[self.current_epoch][i - 1].shape[1])),
+                        np.ones((self.hasil[self.current_epoch][i - 1].shape[0], 1)),
                         self.hasil[self.current_epoch][i - 1],
                     )
                 )
                 self.hasil[self.current_epoch][i] = np.matmul(
-                    np.matrix_transpose(self.bobot[self.current_epoch][i]), XWithBias
+                    XWithBias,
+                    self.bobot[self.current_epoch][i],
                 )
             self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
                 self.hasil[self.current_epoch][i]
@@ -250,28 +241,6 @@ class FFNN:
             0 = Tidak menampilkan apa-apa
             1 = Menampilkan progress bar
         """
-        # Init Bobot
-        if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(X.shape[0], epoch)
-        elif self.inisialisasi_bobot_str == "uniform":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=X.shape[0],
-                low=self.lower_bound,
-                high=self.upper_bound,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        elif self.inisialisasi_bobot_str == "normal":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=X.shape[0],
-                mean=self.mean,
-                std=self.std,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
-
         # Init Model Fit
         self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
         self.loss = np.zeros(epoch)
@@ -284,6 +253,30 @@ class FFNN:
         except ValueError as e:
             print(f"\033[91m{e}\033[0m")
             exit()
+
+        # Init Bobot
+        if self.inisialisasi_bobot_str == "zero":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                self.jumlah_neuron[0], epoch
+            )
+        elif self.inisialisasi_bobot_str == "uniform":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
 
         for i in range(epoch):
             self.current_epoch = i

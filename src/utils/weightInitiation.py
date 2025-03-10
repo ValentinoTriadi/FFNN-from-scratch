@@ -29,9 +29,6 @@ class WeightInitiation:
         if self.model == "zero":
             return self.zero(input_count, epoch)
         elif self.model == "uniform":
-            print("low", low)
-            print("high", high)
-            print("seed", seed)
             return self.uniform(input_count, epoch, low=low, high=high, seed=seed)
         elif self.model == "normal":
             return self.normal(input_count, epoch, mean=mean, std=std, seed=seed)
@@ -41,13 +38,13 @@ class WeightInitiation:
     def zero(self, input_count: int, epoch: int):
         return [
             [
-                np.zeros(
+                np.ones(
                     (
-                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i - 1] + 1,
                         self.jumlah_neuron[i],
                     )
                 )
-                for i in range(self.jumlah_layer)
+                for i in range(1, self.jumlah_layer + 1)
             ]
             for j in range(epoch)
         ]
@@ -60,11 +57,11 @@ class WeightInitiation:
                     low,
                     high,
                     (
-                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i - 1] + 1,
                         self.jumlah_neuron[i],
                     ),
                 )
-                for i in range(self.jumlah_layer)
+                for i in range(1, self.jumlah_layer + 1)
             ]
             for j in range(epoch)
         ]
@@ -77,11 +74,11 @@ class WeightInitiation:
                     mean,
                     std,
                     (
-                        input_count + 1 if i == 0 else self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i - 1] + 1,
                         self.jumlah_neuron[i],
                     ),
                 )
-                for i in range(self.jumlah_layer)
+                for i in range(1, self.jumlah_layer + 1)
             ]
             for j in range(epoch)
         ]
