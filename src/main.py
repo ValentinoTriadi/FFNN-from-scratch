@@ -6,7 +6,7 @@ def main():
     # Inisialisasi model
     model = FFNN(
         jumlah_neuron=[3, 2, 3, 5],
-        fungsi_aktivasi=["Linear", "Linear", "Linear"],
+        fungsi_aktivasi=["Sigmoid", "Sigmoid", "Sigmoid"],
         fungsi_loss="MSE",
         inisialisasi_bobot="zero",
         seed=123123,

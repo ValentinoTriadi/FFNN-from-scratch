@@ -19,12 +19,8 @@ class LossFunction:
             raise ValueError("Fungsi loss tidak valid")
 
     def mse(self, y_pred, y_true):
-        input = tensor(y_pred)
-        target = tensor(y_true)
-
-        loss = nn.MSELoss()
-        mse_torch = loss(input, target)
-        return mse_torch
+        sse = np.sum((y_pred - y_true) ** 2)
+        return sse / (y_pred.shape[0] * y_pred.shape[1])
 
     def binarycrossentropy(self, y_pred, y_true):
         # TODO: Implementasi Binary Cross Entropy
