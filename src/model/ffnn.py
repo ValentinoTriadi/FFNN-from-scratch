@@ -314,6 +314,7 @@ class FFNN:
         batch: int,
         lr: float,
         epoch: int,
+        error_threshold: float = 0.62,
         verbose: int = 0,
     ):
         """
@@ -354,9 +355,15 @@ class FFNN:
             if verbose == 1:
                 print("\033[92mEpoch ke-", i, "\033[0m")
             self.forward()
+            if self.loss[i] < error_threshold:
+                print(f"\033[93mTraining dihentikan pada epoch {i} karena nilai loss ({self.loss[i]:.5f}) < threshold ({error_threshold})\033[0m")
+                break
             print("masuk backward")
             self.backward(X, y)
             self.update(lr)
+            
+            
+            
             if i < epoch - 1:
                 self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
             if verbose == 1:

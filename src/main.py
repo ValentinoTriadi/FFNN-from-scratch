@@ -8,7 +8,7 @@ def main():
         jumlah_neuron=[3, 2, 3, 5],
         fungsi_aktivasi=["ReLU", "ReLU", "ReLU"],
         fungsi_loss="MSE",
-        inisialisasi_bobot="normal",
+        inisialisasi_bobot="xavier-uniform",
         seed=123123,
         lower_bound=-1,
         upper_bound=1,
@@ -20,7 +20,7 @@ def main():
     y = np.array([-1, 0, 1, 0, -1])
 
     # Training model
-    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=2, verbose=1)
+    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=10, verbose=1)
 
     # Print model
     print(model)
