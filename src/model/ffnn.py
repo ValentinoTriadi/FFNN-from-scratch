@@ -190,7 +190,7 @@ class FFNN:
             print("Layer ke-", i)
             print(self.bobot[i])
 
-    def forward(self):
+    def forward(self, last: bool = False):
         """
         Melakukan feed forward pada model
 
@@ -199,6 +199,8 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
+        epoch = self.current_epoch if not last else -1
+        pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
                 XWithBias = np.hstack(
@@ -207,28 +209,46 @@ class FFNN:
                         self.X,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
+
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
             else:
+                hasilSebelumnya = self.hasil[epoch][i - 1] if not last else pred[i - 1]
                 XWithBias = np.hstack(
                     (
-                        np.ones((self.hasil[self.current_epoch][i - 1].shape[0], 1)),
-                        self.hasil[self.current_epoch][i - 1],
+                        np.ones((hasilSebelumnya.shape[0], 1)),
+                        hasilSebelumnya,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
-            self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
-                self.hasil[self.current_epoch][i]
-            )
 
-        self.loss[self.current_epoch] = self.fungsi_loss(
-            self.hasil[self.current_epoch][-1], self.y
-        )
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+
+            if not last:
+                self.hasil[epoch][i] = self.fungsi_aktivasi[i](self.hasil[epoch][i])
+            else:
+                pred[i] = self.fungsi_aktivasi[i](pred[i])
+
+        if not last:
+            self.loss[epoch] = self.fungsi_loss(self.hasil[epoch][-1], self.y)
+        else:
+            return pred
 
     def backward(self, X: np.ndarray, y: np.ndarray):
         """
@@ -302,7 +322,8 @@ class FFNN:
         """
         Melakukan prediksi data"
         """
-        pass
+        self.X = X
+        return self.forward(last=True)[-1]
 
     def tampilkan_model(self):
         """

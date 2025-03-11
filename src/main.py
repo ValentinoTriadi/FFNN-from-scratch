@@ -17,13 +17,16 @@ def main():
     )
 
     x = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]])
-    y = np.array([-1,0,1,0,-1])
+    y = np.array([-1, 0, 1, 0, -1])
 
     # Training model
     model.fit(X=x, y=y, batch=4, lr=0.1, epoch=2, verbose=1)
 
     # Print model
     print(model)
+
+    pred = model.predict(x)
+    print(pred)
 
 
 if __name__ == "__main__":
