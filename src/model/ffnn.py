@@ -157,12 +157,9 @@ class FFNN:
 
     def init_bobot(self, epoch: int = 1):
         if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                self.jumlah_neuron[0], epoch
-            )
+            self.bobot = self.inisialisasi_bobot_class.init_weights(epoch)
         elif self.inisialisasi_bobot_str == "uniform":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
                 low=self.lower_bound,
                 high=self.upper_bound,
                 seed=self.seed,
@@ -170,26 +167,18 @@ class FFNN:
             )
         elif self.inisialisasi_bobot_str == "normal":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
                 mean=self.mean,
                 std=self.std,
                 seed=self.seed,
                 epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == "xavier-uniform":
-            x = np.sqrt(6 / (self.jumlah_neuron[0] + self.jumlah_neuron[-1]))
             self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                low=-x,
-                high=x,
                 seed=self.seed,
                 epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == "xavier-normal":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                mean=0,
-                std=np.sqrt(2 / (self.jumlah_neuron[0] + self.jumlah_neuron[-1])),
                 seed=self.seed,
                 epoch=epoch,
             )
