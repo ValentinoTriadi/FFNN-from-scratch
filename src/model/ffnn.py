@@ -5,7 +5,13 @@ from src.utils.weightInitiation import WeightInitiation
 
 global_fungsi_aktivasi = ["Linear", "Sigmoid", "ReLU", "Tanh", "Softmax"]
 global_fungsi_loss = ["MSE", "BinaryCrossEntropy", "CategoricalCrossEntropy"]
-global_inisialisasi_bobot = ["zero", "uniform", "normal"]
+global_inisialisasi_bobot = [
+    "zero",
+    "uniform",
+    "normal",
+    "xavier-uniform",
+    "xavier-normal",
+]
 
 
 class FFNN:
@@ -22,7 +28,7 @@ class FFNN:
         ['MSE', 'BinaryCrossEntropy', 'CategoricalCrossEntropy']
     @param inisialisasi_bobot: str
         Metode inisialisasi bobot
-        ['zero', 'uniform', 'normal']
+        ['zero', 'uniform', 'normal', 'xavier-uniform', 'xavier-normal']
 
     Optional Param:
     -- Weight Initiation -> uniform --
@@ -149,12 +155,42 @@ class FFNN:
 
         return True
 
+    def init_bobot(self, epoch: int = 1):
+        if self.inisialisasi_bobot_str == "zero":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(epoch)
+        elif self.inisialisasi_bobot_str == "uniform":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "xavier-uniform":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "xavier-normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                seed=self.seed,
+                epoch=epoch,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
     def print_bobot(self):
         for i in range(self.jumlah_layer):
             print("Layer ke-", i)
             print(self.bobot[i])
 
-    def forward(self):
+    def forward(self, last: bool = False):
         """
         Melakukan feed forward pada model
 
@@ -163,6 +199,8 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
+        epoch = self.current_epoch if not last else -1
+        pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
                 XWithBias = np.hstack(
@@ -171,36 +209,46 @@ class FFNN:
                         self.X,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
+
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
             else:
+                hasilSebelumnya = self.hasil[epoch][i - 1] if not last else pred[i - 1]
                 XWithBias = np.hstack(
                     (
-                        np.ones((self.hasil[self.current_epoch][i - 1].shape[0], 1)),
-                        self.hasil[self.current_epoch][i - 1],
+                        np.ones((hasilSebelumnya.shape[0], 1)),
+                        hasilSebelumnya,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
 
-            # Menampilkan hasil sebelum aktivasi
-            print(f"Layer {i} sebelum aktivasi: {self.hasil[self.current_epoch][i]}")
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
 
-            # Terapkan fungsi aktivasi
-            self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
-                self.hasil[self.current_epoch][i]
-            )
+            if not last:
+                self.hasil[epoch][i] = self.fungsi_aktivasi[i](self.hasil[epoch][i])
+            else:
+                pred[i] = self.fungsi_aktivasi[i](pred[i])
 
-            # Menampilkan hasil setelah aktivasi
-            print(f"Layer {i} setelah aktivasi: {self.hasil[self.current_epoch][i]}")
-
-        self.loss[self.current_epoch] = self.fungsi_loss(
-            self.hasil[self.current_epoch][-1], self.y
-        )
+        if not last:
+            self.loss[epoch] = self.fungsi_loss(self.hasil[epoch][-1], self.y)
+        else:
+            return pred
 
 
     def backward(self, X: np.ndarray, y: np.ndarray):
@@ -299,29 +347,7 @@ class FFNN:
             print(f"\033[91m{e}\033[0m")
             exit()
 
-        # Init Bobot
-        if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                self.jumlah_neuron, epoch, self.lower_bound, self.upper_bound, self.mean, self.std, self.seed
-            )
-        elif self.inisialisasi_bobot_str == "uniform":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                low=self.lower_bound,
-                high=self.upper_bound,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        elif self.inisialisasi_bobot_str == "normal":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                mean=self.mean,
-                std=self.std,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
+        self.init_bobot(epoch)
 
         for i in range(epoch):
             self.current_epoch = i
@@ -340,7 +366,8 @@ class FFNN:
         """
         Melakukan prediksi data"
         """
-        pass
+        self.X = X
+        return self.forward(last=True)[-1]
 
     def tampilkan_model(self):
         """
