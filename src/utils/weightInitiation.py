@@ -1,6 +1,12 @@
 import numpy as np
 
-global_inisialisasi_bobot = ["zero", "uniform", "normal"]
+global_inisialisasi_bobot = [
+    "zero",
+    "uniform",
+    "normal",
+    "xavier-uniform",
+    "xavier-normal",
+]
 
 
 class WeightInitiation:
@@ -28,9 +34,9 @@ class WeightInitiation:
     ):
         if self.model == "zero":
             return self.zero(input_count, epoch)
-        elif self.model == "uniform":
+        elif self.model == "uniform" or self.model == "xavier-uniform":
             return self.uniform(input_count, epoch, low=low, high=high, seed=seed)
-        elif self.model == "normal":
+        elif self.model == "normal" or self.model == "xavier-normal":
             return self.normal(input_count, epoch, mean=mean, std=std, seed=seed)
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")

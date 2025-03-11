@@ -5,7 +5,13 @@ from src.utils.weightInitiation import WeightInitiation
 
 global_fungsi_aktivasi = ["Linear", "Sigmoid", "ReLU", "Tanh", "Softmax"]
 global_fungsi_loss = ["MSE", "BinaryCrossEntropy", "CategoricalCrossEntropy"]
-global_inisialisasi_bobot = ["zero", "uniform", "normal"]
+global_inisialisasi_bobot = [
+    "zero",
+    "uniform",
+    "normal",
+    "xavier-uniform",
+    "xavier-normal",
+]
 
 
 class FFNN:
@@ -22,7 +28,7 @@ class FFNN:
         ['MSE', 'BinaryCrossEntropy', 'CategoricalCrossEntropy']
     @param inisialisasi_bobot: str
         Metode inisialisasi bobot
-        ['zero', 'uniform', 'normal']
+        ['zero', 'uniform', 'normal', 'xavier-uniform', 'xavier-normal']
 
     Optional Param:
     -- Weight Initiation -> uniform --
@@ -149,6 +155,47 @@ class FFNN:
 
         return True
 
+    def init_bobot(self, epoch: int = 1):
+        if self.inisialisasi_bobot_str == "zero":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                self.jumlah_neuron[0], epoch
+            )
+        elif self.inisialisasi_bobot_str == "uniform":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "xavier-uniform":
+            x = np.sqrt(6 / (self.jumlah_neuron[0] + self.jumlah_neuron[-1]))
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                low=-x,
+                high=x,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == "xavier-normal":
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                input_count=self.jumlah_neuron[0],
+                mean=0,
+                std=np.sqrt(2 / (self.jumlah_neuron[0] + self.jumlah_neuron[-1])),
+                seed=self.seed,
+                epoch=epoch,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
     def print_bobot(self):
         for i in range(self.jumlah_layer):
             print("Layer ke-", i)
@@ -254,29 +301,7 @@ class FFNN:
             print(f"\033[91m{e}\033[0m")
             exit()
 
-        # Init Bobot
-        if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                self.jumlah_neuron[0], epoch
-            )
-        elif self.inisialisasi_bobot_str == "uniform":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                low=self.lower_bound,
-                high=self.upper_bound,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        elif self.inisialisasi_bobot_str == "normal":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                mean=self.mean,
-                std=self.std,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
+        self.init_bobot(epoch)
 
         for i in range(epoch):
             self.current_epoch = i
