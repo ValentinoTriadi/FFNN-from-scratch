@@ -6,9 +6,9 @@ def main():
     # Inisialisasi model
     model = FFNN(
         jumlah_neuron=[3, 2, 3, 5],
-        fungsi_aktivasi=["Sigmoid", "Sigmoid", "Sigmoid"],
+        fungsi_aktivasi=["ReLU", "ReLU", "ReLU"],
         fungsi_loss="MSE",
-        inisialisasi_bobot="zero",
+        inisialisasi_bobot="normal",
         seed=123123,
         lower_bound=-1,
         upper_bound=1,

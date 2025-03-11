@@ -206,65 +206,58 @@ class FFNN:
     def backward(self, X: np.ndarray, y: np.ndarray):
         """
         Melakukan backpropagation pada model.
-
-        @param X: np.ndarray
-            Input data
-        @param y: np.ndarray
-            Target data
         """
-        # Inisialisasi deltas dan gradients
         self.deltas = [None] * self.jumlah_layer
         self.gradients = [None] * self.jumlah_layer
 
-        # Output layer - Error dan gradien
-        # Error pada layer output
-        output_layer_activation_derivative = next(self.fungsi_aktivasi_class.get_batch_activation_derivative())
-        self.deltas[self.jumlah_layer - 1] = self.hasil[self.current_epoch][self.jumlah_layer - 1] - y
+        # Hitung delta untuk output layer
+        output_layer_activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[-1])
+        self.deltas[self.jumlah_layer - 1] = (self.hasil[self.current_epoch][self.jumlah_layer - 1] - y) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
 
-        # Gradien untuk output layer (Layer 2)
-        self.gradients[self.jumlah_layer - 1] = np.dot(
-            self.hasil[self.current_epoch][self.jumlah_layer - 2].T,  # Input dari layer sebelumnya (5, 4)
-            self.deltas[self.jumlah_layer - 1] * output_layer_activation_derivative(self.hasil[self.current_epoch][self.jumlah_layer - 1])  # Delta output layer (5, 5)
-        )
+        # Hitung delta untuk hidden layer (dari belakang ke depan)
+        for i in range(self.jumlah_layer - 1, 0, -1):  # Dari layer output ke hidden pertama
+            activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[i - 1])
+            self.deltas[i - 1] = np.dot(self.deltas[i], self.bobot[self.current_epoch][i][1:].T) * activation_derivative(self.hasil[self.current_epoch][i - 1])
 
-        # Debugging print untuk memastikan ukuran matriks
-        print(f"Layer 2 delta (error): {self.deltas[self.jumlah_layer - 1].shape}")
-        print(f"Layer 2 gradients: {self.gradients[self.jumlah_layer - 1].shape}")
+        # Hitung gradien untuk setiap layer
+        for i in range(self.jumlah_layer):
+            if i == 0:
+                input_to_layer = X  # Input ke layer pertama adalah X
+            else:
+                input_to_layer = self.hasil[self.current_epoch][i - 1]
 
-        # Propagasi backward untuk layer sebelumnya (Layer 1)
-        for i in range(self.jumlah_layer - 2, -1, -1):
-            if self.deltas[i + 1] is not None:
-                activation_derivative = next(self.fungsi_aktivasi_class.get_batch_activation_derivative())
-                
-                # Menghitung delta untuk layer sebelumnya (Layer 1)
-                self.deltas[i] = np.dot(self.deltas[i + 1], self.bobot[self.current_epoch][i + 1].T) * activation_derivative(self.hasil[self.current_epoch][i])
-                
-                # Gradien untuk layer sebelumnya
-                if i == 0:
-                    self.gradients[i] = np.dot(X.T, self.deltas[i])  # Untuk input X
-                else:
-                    self.gradients[i] = np.dot(self.hasil[self.current_epoch][i - 1].T, self.deltas[i])  # Untuk layer sebelumnya
+            # Tambahkan kolom bias
+            input_with_bias = np.hstack((np.ones((input_to_layer.shape[0], 1)), input_to_layer))
 
-            # Debugging print untuk memeriksa ukuran matriks delta dan gradien
-            print(f"Layer {i} delta: {self.deltas[i].shape}")
-            print(f"Layer {i} gradients: {self.gradients[i].shape}")
+            # Hitung gradien bobot
+            weight_grad = np.dot(input_with_bias.T, self.deltas[i]) / input_to_layer.shape[0]
+
+            # Pisahkan bias dan bobot
+            self.gradients[i] = {
+                "weights": weight_grad[1:],  # Semua kecuali baris pertama (bias)
+                "bias": weight_grad[0:1],  # Hanya baris pertama (bias)
+            }
+
+            print(f"Layer {i} delta shape: {self.deltas[i].shape}")
+            print(f"Layer {i} weight gradient shape: {self.gradients[i]['weights'].shape}")
+            print(f"Layer {i} bias gradient shape: {self.gradients[i]['bias'].shape}")
+
 
 
     def update(self, lr: float):
         """
-        Melakukan update bobot dan bias pada model.
-
-        @param lr: float
-            Learning rate
+        Melakukan update bobot dan bias pada model dengan cara yang benar.
         """
-        # Update bobot untuk setiap layer
         for i in range(self.jumlah_layer):
             if self.gradients[i] is not None:
-                print(f"Updating weights for layer {i}: previous weights: {self.bobot[self.current_epoch][i]}")
-                self.bobot[self.current_epoch][i] -= lr * self.gradients[i]
-                print(f"Updated weights for layer {i}: {self.bobot[self.current_epoch][i]}")
+                print(f"Updating weights for layer {i}: previous weights:\n{self.bobot[self.current_epoch][i]}")
 
+                # Update seluruh bobot sekaligus, termasuk bias
+                self.bobot[self.current_epoch][i] -= lr * np.vstack(
+                    (self.gradients[i]["bias"], self.gradients[i]["weights"])
+                )
 
+                print(f"Updated weights for layer {i}:\n{self.bobot[self.current_epoch][i]}")
 
     def fit(
         self,
@@ -309,7 +302,7 @@ class FFNN:
         # Init Bobot
         if self.inisialisasi_bobot_str == "zero":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
-                 self.jumlah_neuron, epoch, self.lower_bound, self.upper_bound, self.mean, self.std, self.seed
+                self.jumlah_neuron, epoch, self.lower_bound, self.upper_bound, self.mean, self.std, self.seed
             )
         elif self.inisialisasi_bobot_str == "uniform":
             self.bobot = self.inisialisasi_bobot_class.init_weights(
@@ -338,6 +331,8 @@ class FFNN:
             print("masuk backward")
             self.backward(X, y)
             self.update(lr)
+            if i < epoch - 1:
+                self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
             if verbose == 1:
                 print("Loss: ", self.loss[i])
 
