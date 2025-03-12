@@ -85,7 +85,6 @@ class FFNN:
 
         # inisialisasi fungsi loss
         self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
-        
 
         print("Model berhasil diinisialisasi")
 
@@ -127,13 +126,19 @@ class FFNN:
                 "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
             )
         for i in range(self.jumlah_layer):
-            if self.fungsi_aktivasi_str[i] not in ActivationFunction.global_fungsi_aktivasi:
+            if (
+                self.fungsi_aktivasi_str[i]
+                not in ActivationFunction.global_fungsi_aktivasi
+            ):
                 raise ValueError(
                     "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
                 )
         if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
             raise ValueError("Fungsi loss tidak valid")
-        if self.inisialisasi_bobot_str not in WeightInitiation.global_inisialisasi_bobot:
+        if (
+            self.inisialisasi_bobot_str
+            not in WeightInitiation.global_inisialisasi_bobot
+        ):
             raise ValueError("Metode inisialisasi bobot tidak valid")
         if hasattr(self, "y") and self.y is not None:
             if self.y.shape[0] != self.jumlah_neuron[-1]:
@@ -147,28 +152,28 @@ class FFNN:
         return True
 
     def init_bobot(self, epoch: int = 1):
-        if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO:
+        if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(epoch)
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM:
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 low=self.lower_bound,
                 high=self.upper_bound,
                 seed=self.seed,
                 epoch=epoch,
             )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL:
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 mean=self.mean,
                 std=self.std,
                 seed=self.seed,
                 epoch=epoch,
             )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM:
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 seed=self.seed,
                 epoch=epoch,
             )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL:
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 seed=self.seed,
                 epoch=epoch,
@@ -241,7 +246,6 @@ class FFNN:
         else:
             return pred
 
-
     def backward(self, X: np.ndarray, y: np.ndarray):
         """
         Melakukan backpropagation pada model.
@@ -250,13 +254,27 @@ class FFNN:
         self.gradients = [None] * self.jumlah_layer
 
         # Hitung delta untuk output layer
-        output_layer_activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[-1])
-        self.deltas[self.jumlah_layer - 1] = (self.hasil[self.current_epoch][self.jumlah_layer - 1] - y) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
+        output_layer_activation_derivative = (
+            self.fungsi_aktivasi_class.get_activation_derivative(
+                self.fungsi_aktivasi_str[-1]
+            )
+        )
+        self.deltas[self.jumlah_layer - 1] = (
+            self.hasil[self.current_epoch][self.jumlah_layer - 1] - y
+        ) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
 
         # Hitung delta untuk hidden layer (dari belakang ke depan)
-        for i in range(self.jumlah_layer - 1, 0, -1):  # Dari layer output ke hidden pertama
-            activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[i - 1])
-            self.deltas[i - 1] = np.dot(self.deltas[i], self.bobot[self.current_epoch][i][1:].T) * activation_derivative(self.hasil[self.current_epoch][i - 1])
+        for i in range(
+            self.jumlah_layer - 1, 0, -1
+        ):  # Dari layer output ke hidden pertama
+            activation_derivative = (
+                self.fungsi_aktivasi_class.get_activation_derivative(
+                    self.fungsi_aktivasi_str[i - 1]
+                )
+            )
+            self.deltas[i - 1] = np.dot(
+                self.deltas[i], self.bobot[self.current_epoch][i][1:].T
+            ) * activation_derivative(self.hasil[self.current_epoch][i - 1])
 
         # Hitung gradien untuk setiap layer
         for i in range(self.jumlah_layer):
@@ -266,10 +284,14 @@ class FFNN:
                 input_to_layer = self.hasil[self.current_epoch][i - 1]
 
             # Tambahkan kolom bias
-            input_with_bias = np.hstack((np.ones((input_to_layer.shape[0], 1)), input_to_layer))
+            input_with_bias = np.hstack(
+                (np.ones((input_to_layer.shape[0], 1)), input_to_layer)
+            )
 
             # Hitung gradien bobot
-            weight_grad = np.dot(input_with_bias.T, self.deltas[i]) / input_to_layer.shape[0]
+            weight_grad = (
+                np.dot(input_with_bias.T, self.deltas[i]) / input_to_layer.shape[0]
+            )
 
             # Pisahkan bias dan bobot
             self.gradients[i] = {
@@ -277,26 +299,17 @@ class FFNN:
                 "bias": weight_grad[0:1],  # Hanya baris pertama (bias)
             }
 
-            print(f"Layer {i} delta shape: {self.deltas[i].shape}")
-            print(f"Layer {i} weight gradient shape: {self.gradients[i]['weights'].shape}")
-            print(f"Layer {i} bias gradient shape: {self.gradients[i]['bias'].shape}")
-
-
-
     def update(self, lr: float):
         """
         Melakukan update bobot dan bias pada model dengan cara yang benar.
         """
         for i in range(self.jumlah_layer):
             if self.gradients[i] is not None:
-                print(f"Updating weights for layer {i}: previous weights:\n{self.bobot[self.current_epoch][i]}")
 
                 # Update seluruh bobot sekaligus, termasuk bias
                 self.bobot[self.current_epoch][i] -= lr * np.vstack(
                     (self.gradients[i]["bias"], self.gradients[i]["weights"])
                 )
-
-                print(f"Updated weights for layer {i}:\n{self.bobot[self.current_epoch][i]}")
 
     def fit(
         self,
@@ -345,7 +358,6 @@ class FFNN:
             if verbose == 1:
                 print("\033[92mEpoch ke-", i, "\033[0m")
             self.forward()
-            print("masuk backward")
             self.backward(X, y)
             self.update(lr)
             if i < epoch - 1:

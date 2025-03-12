@@ -11,8 +11,7 @@ class LossFunctionMethod(Enum):
 
 class LossFunction:
 
-    global_fungsi_loss : List[LossFunctionMethod] = list(LossFunctionMethod)
-
+    global_fungsi_loss : List[str] = [method.value for method in LossFunctionMethod]
     def __init__(self, fungsi_loss: str):
         self.fungsi_loss = fungsi_loss
         
@@ -20,13 +19,12 @@ class LossFunction:
         self.class_num = class_num
 
     def get_lost_function(self):
-        if self.fungsi_loss == LossFunctionMethod.MSE:
+        if self.fungsi_loss == LossFunctionMethod.MSE.value:
             return self.mse
-        elif self.fungsi_loss == LossFunctionMethod.BinaryCrossEntropy:
+        elif self.fungsi_loss == LossFunctionMethod.BinaryCrossEntropy.value:
             return self.binarycrossentropy
-        elif self.fungsi_loss == LossFunctionMethod.CategoricalCrossEntropy:
+        elif self.fungsi_loss == LossFunctionMethod.CategoricalCrossEntropy.value:
             return self.categoricalcrossentropy
-
         else:
             raise ValueError("Fungsi loss tidak valid")
 

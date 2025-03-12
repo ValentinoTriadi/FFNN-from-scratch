@@ -8,8 +8,8 @@ def main():
     # Inisialisasi model
     model = FFNN(
         jumlah_neuron=[3, 2, 3, 5],
-        fungsi_aktivasi=["ReLU", "ReLU", "ReLU"],
-        fungsi_loss="MSE",
+        fungsi_aktivasi=["Sigmoid", "Sigmoid", "Sigmoid"],
+        fungsi_loss="CategoricalCrossEntropy",
         inisialisasi_bobot="normal",
         seed=123123,
         lower_bound=-1,
@@ -19,13 +19,13 @@ def main():
     )
 
     x = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]])
-    y = np.array([-1, 0, 1, 0, -1])
+    y = np.array([0, 1, 1, 0, 11])
 
     # Training model
-    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=2, verbose=1)
+    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=1000, verbose=1)
 
     # Print model
-    print(model)
+    # print(model)
 
     pred = model.predict(x)
     print(pred)

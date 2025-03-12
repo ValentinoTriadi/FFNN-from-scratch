@@ -2,15 +2,19 @@ from typing import List
 import numpy as np
 from enum import Enum
 
+
 class WeightInitiationMethod(Enum):
-    ZERO = "Zero"
-    UNIFORM = "Uniform"
-    NORMAL = "Normal"
-    XAVIER_UNIFORM = "Xavier-Uniform"
-    XAVIER_NORMAL = "Xavier-Normal"
+    ZERO = "zero"
+    UNIFORM = "uniform"
+    NORMAL = "normal"
+    XAVIER_UNIFORM = "xavier-uniform"
+    XAVIER_NORMAL = "xavier-normal"
+
 
 class WeightInitiation:
-    global_inisialisasi_bobot: List[WeightInitiationMethod] = list(WeightInitiationMethod)
+    global_inisialisasi_bobot: List[str] = [
+        method.value for method in WeightInitiationMethod
+    ]
 
     def __init__(
         self,
@@ -33,16 +37,16 @@ class WeightInitiation:
         std: float = 0,
         seed: int = 0,
     ):
-        match(self.model):
-            case WeightInitiationMethod.ZERO:
+        match (self.model):
+            case WeightInitiationMethod.ZERO.value:
                 return self.zero(epoch)
-            case WeightInitiationMethod.UNIFORM:
+            case WeightInitiationMethod.UNIFORM.value:
                 return self.uniform(epoch, low, high, seed)
-            case WeightInitiationMethod.NORMAL:
+            case WeightInitiationMethod.NORMAL.value:
                 return self.normal(epoch, mean, std, seed)
-            case WeightInitiationMethod.XAVIER_UNIFORM:
+            case WeightInitiationMethod.XAVIER_UNIFORM.value:
                 return self.xavier_uniform(epoch, seed)
-            case WeightInitiationMethod.XAVIER_NORMAL:
+            case WeightInitiationMethod.XAVIER_NORMAL.value:
                 return self.xavier_normal(epoch, seed)
             case _:
                 raise ValueError("Metode inisialisasi bobot tidak valid")

@@ -3,14 +3,14 @@ import numpy as np
 from enum import Enum
 
 class ActivationFunctionMethod(Enum):
-    LINEAR = "Linear",
-    SIGMOID = "Sigmoid",
-    RELU = "ReLU",
-    TANH = "Tanh",
+    LINEAR = "Linear"
+    SIGMOID = "Sigmoid"
+    RELU = "ReLU"
+    TANH = "Tanh"
     SOFTMAX = "Softmax"
 
 class ActivationFunction:
-    global_fungsi_aktivasi : List[ActivationFunctionMethod]= list(ActivationFunctionMethod)
+    global_fungsi_aktivasi: List[str] = [method.value for method in ActivationFunctionMethod]
 
     def __init__(self, fungsi_aktivasi: list[str]):
         self.fungsi_aktivasi = fungsi_aktivasi
@@ -54,15 +54,15 @@ class ActivationFunction:
 
     def get_activation_function(self, fungsi_aktivasi: ActivationFunctionMethod):
         match fungsi_aktivasi:
-            case ActivationFunctionMethod.LINEAR:
+            case ActivationFunctionMethod.LINEAR.value:
                 return self.linear
-            case ActivationFunctionMethod.RELU:
+            case ActivationFunctionMethod.RELU.value:
                 return self.relu
-            case ActivationFunctionMethod.SIGMOID:
+            case ActivationFunctionMethod.SIGMOID.value:
                 return self.sigmoid
-            case ActivationFunctionMethod.TANH:
+            case ActivationFunctionMethod.TANH.value:
                 return self.tanh
-            case ActivationFunctionMethod.SOFTMAX:
+            case ActivationFunctionMethod.SOFTMAX.value:
                 return self.softmax
 
     def get_batch_activation_function(self):
@@ -71,15 +71,15 @@ class ActivationFunction:
 
     def get_activation_derivative(self, fungsi_aktivasi: str):
         match fungsi_aktivasi:
-            case ActivationFunctionMethod.LINEAR:
+            case ActivationFunctionMethod.LINEAR.value:
                 return self.linear_derivative
-            case ActivationFunctionMethod.RELU:
+            case ActivationFunctionMethod.RELU.value:
                 return self.relu_derivative
-            case ActivationFunctionMethod.SIGMOID:
+            case ActivationFunctionMethod.SIGMOID.value:
                 return self.sigmoid_derivative
-            case ActivationFunctionMethod.TANH:
+            case ActivationFunctionMethod.TANH.value:
                 return self.tanh_derivative
-            case ActivationFunctionMethod.SOFTMAX:
+            case ActivationFunctionMethod.SOFTMAX.value:
                 return self.softmax_derivative
 
     def get_batch_activation_derivative(self):
