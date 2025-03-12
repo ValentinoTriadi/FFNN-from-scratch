@@ -1,16 +1,22 @@
+from typing import List
 import numpy as np
+from enum import Enum
 
-global_inisialisasi_bobot = ["zero", "uniform", "normal"]
-
+class WeightInitiationMethod(Enum):
+    ZERO = "Zero"
+    UNIFORM = "Uniform"
+    NORMAL = "Normal"
 
 class WeightInitiation:
+    global_inisialisasi_bobot: List[WeightInitiationMethod] = list(WeightInitiationMethod)
+
     def __init__(
         self,
-        model: str,
+        model: WeightInitiationMethod,
         jumlah_layer: int,
         jumlah_neuron: list[int],
     ):
-        if model not in global_inisialisasi_bobot:
+        if model not in WeightInitiation.global_inisialisasi_bobot:
             raise ValueError("Metode inisialisasi bobot tidak valid")
         self.model = model
         self.jumlah_layer = jumlah_layer
@@ -26,14 +32,15 @@ class WeightInitiation:
         std: float = 0,
         seed: int = 0,
     ):
-        if self.model == "zero":
-            return self.zero(input_count, epoch)
-        elif self.model == "uniform":
-            return self.uniform(input_count, epoch, low=low, high=high, seed=seed)
-        elif self.model == "normal":
-            return self.normal(input_count, epoch, mean=mean, std=std, seed=seed)
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
+        match(self.model):
+            case WeightInitiationMethod.ZERO:
+                return self.zero(input_count, epoch)
+            case WeightInitiationMethod.UNIFORM:
+                return self.uniform(input_count, epoch, low, high, seed)
+            case WeightInitiationMethod.NORMAL:
+                return self.normal(input_count, epoch, mean, std, seed)
+            case _:
+                raise ValueError("Metode inisialisasi bobot tidak valid")
 
     def zero(self, input_count: int, epoch: int):
         return [

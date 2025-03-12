@@ -1,11 +1,7 @@
 import numpy as np
-from src.utils.activationFunction import ActivationFunction
-from src.utils.lossFunction import LossFunction
-from src.utils.weightInitiation import WeightInitiation
-
-global_fungsi_aktivasi = ["Linear", "Sigmoid", "ReLU", "Tanh", "Softmax"]
-global_fungsi_loss = ["MSE", "BinaryCrossEntropy", "CategoricalCrossEntropy"]
-global_inisialisasi_bobot = ["zero", "uniform", "normal"]
+from src.utils.activationFunction import ActivationFunction, ActivationFunctionMethod
+from src.utils.lossFunction import LossFunction, LossFunctionMethod
+from src.utils.weightInitiation import WeightInitiation, WeightInitiationMethod
 
 
 class FFNN:
@@ -45,9 +41,9 @@ class FFNN:
     def __init__(
         self,
         jumlah_neuron: list[int],
-        fungsi_aktivasi: list[str],
-        fungsi_loss: str,
-        inisialisasi_bobot: str,
+        fungsi_aktivasi: list[ActivationFunctionMethod],
+        fungsi_loss: LossFunctionMethod,
+        inisialisasi_bobot: WeightInitiationMethod,
         lower_bound: float = -1.0,
         upper_bound: float = 1.0,
         mean: float = 0.0,
@@ -89,6 +85,7 @@ class FFNN:
 
         # inisialisasi fungsi loss
         self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
+        
 
         print("Model berhasil diinisialisasi")
 
@@ -130,13 +127,13 @@ class FFNN:
                 "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
             )
         for i in range(self.jumlah_layer):
-            if self.fungsi_aktivasi_str[i] not in global_fungsi_aktivasi:
+            if self.fungsi_aktivasi_str[i] not in ActivationFunction.global_fungsi_aktivasi:
                 raise ValueError(
                     "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
                 )
-        if self.fungsi_loss_str not in global_fungsi_loss:
+        if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
             raise ValueError("Fungsi loss tidak valid")
-        if self.inisialisasi_bobot_str not in global_inisialisasi_bobot:
+        if self.inisialisasi_bobot_str not in WeightInitiation.global_inisialisasi_bobot:
             raise ValueError("Metode inisialisasi bobot tidak valid")
         if hasattr(self, "y") and self.y is not None:
             if self.y.shape[0] != self.jumlah_neuron[-1]:
@@ -189,7 +186,7 @@ class FFNN:
             self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
                 self.hasil[self.current_epoch][i]
             )
-
+        
         self.loss[self.current_epoch] = self.fungsi_loss(
             self.hasil[self.current_epoch][-1], self.y
         )
@@ -254,29 +251,17 @@ class FFNN:
             print(f"\033[91m{e}\033[0m")
             exit()
 
-        # Init Bobot
-        if self.inisialisasi_bobot_str == "zero":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                self.jumlah_neuron[0], epoch
-            )
-        elif self.inisialisasi_bobot_str == "uniform":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                low=self.lower_bound,
-                high=self.upper_bound,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        elif self.inisialisasi_bobot_str == "normal":
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                input_count=self.jumlah_neuron[0],
-                mean=self.mean,
-                std=self.std,
-                seed=self.seed,
-                epoch=epoch,
-            )
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
+        # # Init Bobot
+
+        self.bobot = self.inisialisasi_bobot_class.init_weights(
+            input_count=self.jumlah_neuron[0],
+            mean=self.mean,
+            std=self.std,
+            seed=self.seed,
+            epoch=epoch,
+            low=self.lower_bound,
+            high=self.upper_bound,
+        )
 
         for i in range(epoch):
             self.current_epoch = i
