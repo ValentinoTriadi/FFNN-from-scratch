@@ -32,8 +32,7 @@ class LossFunction:
 
     def mse(self, y_pred, y_true):
         sse = np.sum((y_pred - y_true) ** 2)
-        return sse / y_pred.shape[1]
-
+        return sse / (y_pred.shape[0] * y_pred.shape[1])
 
     def binarycrossentropy(self, y_pred, y_true):
         if(y_true.shape[0] != y_true.shape[0]):

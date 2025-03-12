@@ -18,7 +18,7 @@ class FFNN:
         ['MSE', 'BinaryCrossEntropy', 'CategoricalCrossEntropy']
     @param inisialisasi_bobot: str
         Metode inisialisasi bobot
-        ['zero', 'uniform', 'normal']
+        ['zero', 'uniform', 'normal', 'xavier-uniform', 'xavier-normal']
 
     Optional Param:
     -- Weight Initiation -> uniform --
@@ -146,12 +146,42 @@ class FFNN:
 
         return True
 
+    def init_bobot(self, epoch: int = 1):
+        if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO:
+            self.bobot = self.inisialisasi_bobot_class.init_weights(epoch)
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM:
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL:
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM:
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                seed=self.seed,
+                epoch=epoch,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL:
+            self.bobot = self.inisialisasi_bobot_class.init_weights(
+                seed=self.seed,
+                epoch=epoch,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
     def print_bobot(self):
         for i in range(self.jumlah_layer):
             print("Layer ke-", i)
             print(self.bobot[i])
 
-    def forward(self):
+    def forward(self, last: bool = False):
         """
         Melakukan feed forward pada model
 
@@ -160,56 +190,113 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
+        epoch = self.current_epoch if not last else -1
+        pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
                 XWithBias = np.hstack(
                     (
-                        np.ones((self.X.shape[0], 1)),
+                        np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
                         self.X,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
+
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
             else:
+                hasilSebelumnya = self.hasil[epoch][i - 1] if not last else pred[i - 1]
                 XWithBias = np.hstack(
                     (
-                        np.ones((self.hasil[self.current_epoch][i - 1].shape[0], 1)),
-                        self.hasil[self.current_epoch][i - 1],
+                        np.ones((hasilSebelumnya.shape[0], 1)),
+                        hasilSebelumnya,
                     )
                 )
-                self.hasil[self.current_epoch][i] = np.matmul(
-                    XWithBias,
-                    self.bobot[self.current_epoch][i],
-                )
-            self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
-                self.hasil[self.current_epoch][i]
-            )
-        
-        self.loss[self.current_epoch] = self.fungsi_loss(
-            self.hasil[self.current_epoch][-1], self.y
-        )
+
+                if not last:
+                    self.hasil[epoch][i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+                else:
+                    pred[i] = np.matmul(
+                        XWithBias,
+                        self.bobot[epoch][i],
+                    )
+
+            if not last:
+                self.hasil[epoch][i] = self.fungsi_aktivasi[i](self.hasil[epoch][i])
+            else:
+                pred[i] = self.fungsi_aktivasi[i](pred[i])
+
+        if not last:
+            self.loss[epoch] = self.fungsi_loss(self.hasil[epoch][-1], self.y)
+        else:
+            return pred
+
 
     def backward(self, X: np.ndarray, y: np.ndarray):
         """
-        Melakukan backpropagation pada model
-
-        @param X: np.ndarray
-            Input data
-        @param y: np.ndarray
-            Target data
+        Melakukan backpropagation pada model.
         """
-        pass
+        self.deltas = [None] * self.jumlah_layer
+        self.gradients = [None] * self.jumlah_layer
+
+        # Hitung delta untuk output layer
+        output_layer_activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[-1])
+        self.deltas[self.jumlah_layer - 1] = (self.hasil[self.current_epoch][self.jumlah_layer - 1] - y) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
+
+        # Hitung delta untuk hidden layer (dari belakang ke depan)
+        for i in range(self.jumlah_layer - 1, 0, -1):  # Dari layer output ke hidden pertama
+            activation_derivative = self.fungsi_aktivasi_class.get_activation_derivative(self.fungsi_aktivasi_str[i - 1])
+            self.deltas[i - 1] = np.dot(self.deltas[i], self.bobot[self.current_epoch][i][1:].T) * activation_derivative(self.hasil[self.current_epoch][i - 1])
+
+        # Hitung gradien untuk setiap layer
+        for i in range(self.jumlah_layer):
+            if i == 0:
+                input_to_layer = X  # Input ke layer pertama adalah X
+            else:
+                input_to_layer = self.hasil[self.current_epoch][i - 1]
+
+            # Tambahkan kolom bias
+            input_with_bias = np.hstack((np.ones((input_to_layer.shape[0], 1)), input_to_layer))
+
+            # Hitung gradien bobot
+            weight_grad = np.dot(input_with_bias.T, self.deltas[i]) / input_to_layer.shape[0]
+
+            # Pisahkan bias dan bobot
+            self.gradients[i] = {
+                "weights": weight_grad[1:],  # Semua kecuali baris pertama (bias)
+                "bias": weight_grad[0:1],  # Hanya baris pertama (bias)
+            }
+
+            print(f"Layer {i} delta shape: {self.deltas[i].shape}")
+            print(f"Layer {i} weight gradient shape: {self.gradients[i]['weights'].shape}")
+            print(f"Layer {i} bias gradient shape: {self.gradients[i]['bias'].shape}")
+
+
 
     def update(self, lr: float):
         """
-        Melakukan update bobot dan bias pada model
-
-        @param lr: float
-            Learning rate
+        Melakukan update bobot dan bias pada model dengan cara yang benar.
         """
-        pass
+        for i in range(self.jumlah_layer):
+            if self.gradients[i] is not None:
+                print(f"Updating weights for layer {i}: previous weights:\n{self.bobot[self.current_epoch][i]}")
+
+                # Update seluruh bobot sekaligus, termasuk bias
+                self.bobot[self.current_epoch][i] -= lr * np.vstack(
+                    (self.gradients[i]["bias"], self.gradients[i]["weights"])
+                )
+
+                print(f"Updated weights for layer {i}:\n{self.bobot[self.current_epoch][i]}")
 
     def fit(
         self,
@@ -251,29 +338,27 @@ class FFNN:
             print(f"\033[91m{e}\033[0m")
             exit()
 
-        # # Init Bobot
-
-        self.bobot = self.inisialisasi_bobot_class.init_weights(
-            input_count=self.jumlah_neuron[0],
-            mean=self.mean,
-            std=self.std,
-            seed=self.seed,
-            epoch=epoch,
-            low=self.lower_bound,
-            high=self.upper_bound,
-        )
+        self.init_bobot(epoch)
 
         for i in range(epoch):
             self.current_epoch = i
             if verbose == 1:
                 print("\033[92mEpoch ke-", i, "\033[0m")
             self.forward()
+            print("masuk backward")
+            self.backward(X, y)
+            self.update(lr)
+            if i < epoch - 1:
+                self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
+            if verbose == 1:
+                print("Loss: ", self.loss[i])
 
     def predict(self, X: np.ndarray):
         """
         Melakukan prediksi data"
         """
-        pass
+        self.X = X
+        return self.forward(last=True)[-1]
 
     def tampilkan_model(self):
         """
