@@ -194,11 +194,15 @@ class FFNN:
         pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
-                XWithBias = np.hstack(
-                    (
-                        np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
-                        self.X,
-                    )
+                XWithBias = np.clip(
+                    np.hstack(
+                        (
+                            np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
+                            self.X,
+                        )
+                    ),
+                    0.0001,
+                    None,
                 )
 
                 if not last:
@@ -215,11 +219,15 @@ class FFNN:
                 hasilSebelumnya = (
                     self.hasil[self.current_epoch][i - 1] if not last else pred[i - 1]
                 )
-                XWithBias = np.hstack(
-                    (
-                        np.ones((hasilSebelumnya.shape[0], 1)),
-                        hasilSebelumnya,
-                    )
+                XWithBias = np.clip(
+                    np.hstack(
+                        (
+                            np.ones((hasilSebelumnya.shape[0], 1)),
+                            hasilSebelumnya,
+                        )
+                    ),
+                    0.0001,
+                    None,
                 )
 
                 if not last:
@@ -311,6 +319,8 @@ class FFNN:
                 self.bobot[i] -= lr * np.vstack(
                     (self.gradients[i]["bias"], self.gradients[i]["weights"])
                 )
+
+                self.bobot[i] = np.clip(self.bobot[i], 0.0001, None)
 
     def fit(
         self,
