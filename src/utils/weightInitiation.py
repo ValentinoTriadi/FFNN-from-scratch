@@ -52,68 +52,83 @@ class WeightInitiation:
                 raise ValueError("Metode inisialisasi bobot tidak valid")
 
     def zero(self):
-        return np.array([
-            np.zeros(
-                (
-                    self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
+        return np.array(
+            [
+                np.zeros(
+                    (
+                        self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    )
                 )
-            )
-            for i in range(1, self.jumlah_layer + 1)
-        ], dtype=object)
+                for i in range(1, self.jumlah_layer + 1)
+            ],
+            dtype=object,
+        )
 
     def uniform(self, low: float, high: float, seed: int):
         np.random.seed(seed)
-        return np.array([
-            np.random.uniform(
-                low,
-                high,
-                (
-                    self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )
-            for i in range(1, self.jumlah_layer + 1)
-        ], dtype=object)
+        return np.array(
+            [
+                np.random.uniform(
+                    low,
+                    high,
+                    (
+                        self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(1, self.jumlah_layer + 1)
+            ],
+            dtype=object,
+        )
 
     def normal(self, mean: float, std: float, seed: int):
         np.random.seed(seed)
-        return np.array([
-            np.random.normal(
-                mean,
-                std,
-                (
-                    self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )   
-            for i in range(1, self.jumlah_layer + 1)
-        ], dtype=object)
+        return np.array(
+            [
+                np.random.normal(
+                    mean,
+                    std,
+                    (
+                        self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(1, self.jumlah_layer + 1)
+            ],
+            dtype=object,
+        )
 
     def xavier_uniform(self, seed: int):
         np.random.seed(seed)
-        return np.array([
-            np.random.uniform(
-                -np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                (
-                    self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )
-            for i in range(1, self.jumlah_layer + 1)
-        ], dtype=object)
+        return np.array(
+            [
+                np.random.uniform(
+                    -np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                    np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                    (
+                        self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(1, self.jumlah_layer + 1)
+            ],
+            dtype=object,
+        )
 
     def xavier_normal(self, seed: int):
         np.random.seed(seed)
-        return np.array([
-            np.random.normal(
-                0,
-                np.sqrt(2 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                (
-                    self.jumlah_neuron[i - 1] + 1,
-                    self.jumlah_neuron[i],
-                ),
-            )
-            for i in range(1, self.jumlah_layer + 1)
-        ], dtype=object)
+        return np.array(
+            [
+                np.random.normal(
+                    0,
+                    np.sqrt(2 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                    (
+                        self.jumlah_neuron[i - 1] + 1,
+                        self.jumlah_neuron[i],
+                    ),
+                )
+                for i in range(1, self.jumlah_layer + 1)
+            ],
+            dtype=object,
+        )

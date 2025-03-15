@@ -223,8 +223,6 @@ class FFNN:
                 )
 
                 if not last:
-                    print(XWithBias.shape)
-                    print(self.bobot[i])
                     self.hasil[self.current_epoch][i] = np.matmul(
                         XWithBias,
                         self.bobot[i],

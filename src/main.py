@@ -1,10 +1,14 @@
-from src.model.ffnn import FFNN, WeightInitiationMethod,ActivationFunctionMethod, LossFunctionMethod
+from src.model.ffnn import (
+    FFNN,
+    WeightInitiationMethod,
+    ActivationFunctionMethod,
+    LossFunctionMethod,
+)
 import numpy as np
 
 
 def main():
 
-    
     # Inisialisasi model
     model = FFNN(
         jumlah_neuron=[3, 2, 3, 5],
@@ -22,7 +26,7 @@ def main():
     y = np.array([0, 1, 2, 3, 4])
 
     # Training model
-    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=1000, verbose=1)
+    model.fit(X=x, y=y, batch=4, lr=0.1, epoch=40, verbose=1)
 
     # Print model
     # print(model)
