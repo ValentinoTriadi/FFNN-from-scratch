@@ -363,8 +363,8 @@ class FFNN:
             self.forward()
             self.backward(X, y)
             self.update(lr)
-            if i < epoch - 1:
-                self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
+            # if i < epoch - 1:
+            #     self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
             if verbose == 1:
                 print("Loss: ", self.loss[i])
 
