@@ -151,32 +151,28 @@ class FFNN:
 
         return True
 
-    def init_bobot(self, epoch: int = 1):
+    def init_bobot(self):
         if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights(epoch)
+            self.bobot = self.inisialisasi_bobot_class.init_weights()
         elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 low=self.lower_bound,
                 high=self.upper_bound,
                 seed=self.seed,
-                epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 mean=self.mean,
                 std=self.std,
                 seed=self.seed,
-                epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 seed=self.seed,
-                epoch=epoch,
             )
         elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL.value:
             self.bobot = self.inisialisasi_bobot_class.init_weights(
                 seed=self.seed,
-                epoch=epoch,
             )
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")
@@ -195,7 +191,6 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
-        epoch = self.current_epoch if not last else -1
         pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
@@ -207,17 +202,19 @@ class FFNN:
                 )
 
                 if not last:
-                    self.hasil[epoch][i] = np.matmul(
+                    self.hasil[self.current_epoch][i] = np.matmul(
                         XWithBias,
-                        self.bobot[epoch][i],
+                        self.bobot[i],
                     )
                 else:
                     pred[i] = np.matmul(
                         XWithBias,
-                        self.bobot[epoch][i],
+                        self.bobot[i],
                     )
             else:
-                hasilSebelumnya = self.hasil[epoch][i - 1] if not last else pred[i - 1]
+                hasilSebelumnya = (
+                    self.hasil[self.current_epoch][i - 1] if not last else pred[i - 1]
+                )
                 XWithBias = np.hstack(
                     (
                         np.ones((hasilSebelumnya.shape[0], 1)),
@@ -226,23 +223,29 @@ class FFNN:
                 )
 
                 if not last:
-                    self.hasil[epoch][i] = np.matmul(
+                    print(XWithBias.shape)
+                    print(self.bobot[i])
+                    self.hasil[self.current_epoch][i] = np.matmul(
                         XWithBias,
-                        self.bobot[epoch][i],
+                        self.bobot[i],
                     )
                 else:
                     pred[i] = np.matmul(
                         XWithBias,
-                        self.bobot[epoch][i],
+                        self.bobot[i],
                     )
 
             if not last:
-                self.hasil[epoch][i] = self.fungsi_aktivasi[i](self.hasil[epoch][i])
+                self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
+                    self.hasil[self.current_epoch][i]
+                )
             else:
                 pred[i] = self.fungsi_aktivasi[i](pred[i])
 
         if not last:
-            self.loss[epoch] = self.fungsi_loss(self.hasil[epoch][-1], self.y)
+            self.loss[self.current_epoch] = self.fungsi_loss(
+                self.hasil[self.current_epoch][-1], self.y
+            )
         else:
             return pred
 
@@ -250,8 +253,8 @@ class FFNN:
         """
         Melakukan backpropagation pada model.
         """
-        self.deltas = [None] * self.jumlah_layer
-        self.gradients = [None] * self.jumlah_layer
+        self.deltas = np.empty(self.jumlah_layer, dtype=object)
+        self.gradients = np.empty(self.jumlah_layer, dtype=object)
 
         # Hitung delta untuk output layer
         output_layer_activation_derivative = (
@@ -259,8 +262,8 @@ class FFNN:
                 self.fungsi_aktivasi_str[-1]
             )
         )
-        self.deltas[self.jumlah_layer - 1] = (
-            self.hasil[self.current_epoch][self.jumlah_layer - 1] - y
+        self.deltas[-1] = (
+            self.hasil[self.current_epoch][-1] - y
         ) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
 
         # Hitung delta untuk hidden layer (dari belakang ke depan)
@@ -273,7 +276,7 @@ class FFNN:
                 )
             )
             self.deltas[i - 1] = np.dot(
-                self.deltas[i], self.bobot[self.current_epoch][i][1:].T
+                self.deltas[i], self.bobot[i][1:].T
             ) * activation_derivative(self.hasil[self.current_epoch][i - 1])
 
         # Hitung gradien untuk setiap layer
@@ -307,7 +310,7 @@ class FFNN:
             if self.gradients[i] is not None:
 
                 # Update seluruh bobot sekaligus, termasuk bias
-                self.bobot[self.current_epoch][i] -= lr * np.vstack(
+                self.bobot[i] -= lr * np.vstack(
                     (self.gradients[i]["bias"], self.gradients[i]["weights"])
                 )
 
@@ -351,7 +354,7 @@ class FFNN:
             print(f"\033[91m{e}\033[0m")
             exit()
 
-        self.init_bobot(epoch)
+        self.init_bobot()
 
         for i in range(epoch):
             self.current_epoch = i

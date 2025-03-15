@@ -39,96 +39,81 @@ class WeightInitiation:
     ):
         match (self.model):
             case WeightInitiationMethod.ZERO.value:
-                return self.zero(epoch)
+                return self.zero()
             case WeightInitiationMethod.UNIFORM.value:
-                return self.uniform(epoch, low, high, seed)
+                return self.uniform(low, high, seed)
             case WeightInitiationMethod.NORMAL.value:
-                return self.normal(epoch, mean, std, seed)
+                return self.normal(mean, std, seed)
             case WeightInitiationMethod.XAVIER_UNIFORM.value:
-                return self.xavier_uniform(epoch, seed)
+                return self.xavier_uniform(seed)
             case WeightInitiationMethod.XAVIER_NORMAL.value:
-                return self.xavier_normal(epoch, seed)
+                return self.xavier_normal(seed)
             case _:
                 raise ValueError("Metode inisialisasi bobot tidak valid")
 
-    def zero(self, epoch: int):
-        return [
-            [
-                np.zeros(
-                    (
-                        self.jumlah_neuron[i - 1] + 1,
-                        self.jumlah_neuron[i],
-                    )
-                )
-                for i in range(1, self.jumlah_layer + 1)
-            ]
-            for j in range(epoch)
-        ]
+    def zero(self):
+        return np.array([
+            np.zeros(
+            (
+                self.jumlah_neuron[i - 1] + 1,
+                self.jumlah_neuron[i],
+            )
+            )
+            for i in range(1, self.jumlah_layer + 1)
+        ])
 
-    def uniform(self, epoch: int, low: float, high: float, seed: int):
+    def uniform(self, low: float, high: float, seed: int):
         np.random.seed(seed)
         return [
-            [
-                np.random.uniform(
-                    low,
-                    high,
-                    (
-                        self.jumlah_neuron[i - 1] + 1,
-                        self.jumlah_neuron[i],
-                    ),
-                )
-                for i in range(1, self.jumlah_layer + 1)
-            ]
-            for j in range(epoch)
+            np.random.uniform(
+                low,
+                high,
+                (
+                    self.jumlah_neuron[i - 1] + 1,
+                    self.jumlah_neuron[i],
+                ),
+            )
+            for i in range(1, self.jumlah_layer + 1)
         ]
 
-    def normal(self, epoch: int, mean: float, std: float, seed: int):
+    def normal(self, mean: float, std: float, seed: int):
         np.random.seed(seed)
         return [
-            [
-                np.random.normal(
-                    mean,
-                    std,
-                    (
-                        self.jumlah_neuron[i - 1] + 1,
-                        self.jumlah_neuron[i],
-                    ),
-                )
-                for i in range(1, self.jumlah_layer + 1)
-            ]
-            for j in range(epoch)
+            np.random.normal(
+                mean,
+                std,
+                (
+                    self.jumlah_neuron[i - 1] + 1,
+                    self.jumlah_neuron[i],
+                ),
+            )
+            for i in range(1, self.jumlah_layer + 1)
         ]
 
-    def xavier_uniform(self, epoch: int, seed: int):
+    def xavier_uniform(self, seed: int):
         np.random.seed(seed)
         return [
-            [
-                np.random.uniform(
-                    -np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                    np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                    (
-                        self.jumlah_neuron[i - 1] + 1,
-                        self.jumlah_neuron[i],
-                    ),
-                )
-                for i in range(1, self.jumlah_layer + 1)
-            ]
-            for j in range(epoch)
+            np.random.uniform(
+                -np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                np.sqrt(6 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                (
+                    self.jumlah_neuron[i - 1] + 1,
+                    self.jumlah_neuron[i],
+                ),
+            )
+            for i in range(1, self.jumlah_layer + 1)
         ]
 
-    def xavier_normal(self, epoch: int, seed: int):
+    def xavier_normal(self, seed: int):
         np.random.seed(seed)
         return [
-            [
-                np.random.normal(
-                    0,
-                    np.sqrt(2 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
-                    (
-                        self.jumlah_neuron[i - 1] + 1,
-                        self.jumlah_neuron[i],
-                    ),
-                )
-                for i in range(1, self.jumlah_layer + 1)
-            ]
-            for j in range(epoch)
+            np.random.normal(
+                0,
+                np.sqrt(2 / (self.jumlah_neuron[i - 1] + self.jumlah_neuron[i])),
+                (
+                    self.jumlah_neuron[i - 1] + 1,
+                    self.jumlah_neuron[i],
+                ),
+            )
+            for i in range(1, self.jumlah_layer + 1)
         ]

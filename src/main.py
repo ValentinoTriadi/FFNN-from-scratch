@@ -18,8 +18,8 @@ def main():
         std=1,
     )
 
-    x = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]])
-    y = np.array([0, 1, 1, 0, 11])
+    x = np.array([[0, 0, 0], [4, 1, 2], [992, -992, 122], [3, 3, 3], [4, 4, 4]])
+    y = np.array([0, 1, 2, 3, 4])
 
     # Training model
     model.fit(X=x, y=y, batch=4, lr=0.1, epoch=1000, verbose=1)
