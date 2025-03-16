@@ -31,6 +31,17 @@ class LossFunction:
         else:
             raise ValueError("Fungsi loss tidak valid")
 
+    def get_loss_derivative(self):
+        if self.fungsi_loss == LossFunctionMethod.MSE.value:
+            return self.mse_derivative
+        elif self.fungsi_loss == LossFunctionMethod.BinaryCrossEntropy.value:
+            return self.binary_cross_entropy_derivative
+        elif self.fungsi_loss == LossFunctionMethod.CategoricalCrossEntropy.value:
+            return self.categorical_cross_entropy_derivative
+        else:
+            raise ValueError("Fungsi loss tidak valid")
+
+
     def mse(self, y_pred, y_true):
         sse = np.sum((y_pred - y_true) ** 2)
         return sse / (y_pred.shape[0] * y_pred.shape[1])
@@ -52,11 +63,28 @@ class LossFunction:
         return np.mean(bce)
 
     def categoricalcrossentropy(self, y_pred, y_true):
-        epsilon = 1e-3
-        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+        epsilon = 1e-10  
+        y_pred = np.clip(y_pred, epsilon, 1.0 - epsilon)
 
         cce = []
-        for i in range(len(y_true)):
+        for i in range(y_true.shape[0]):
             temp = -np.sum(y_true[i] * np.log(y_pred[i]))
             cce.append(temp)
-        return np.clip(np.mean(cce), epsilon, None)
+
+        return np.mean(cce)
+
+
+
+    def mse_derivative(self, y_pred, y_true):
+        return 2 * (y_pred - y_true) / (y_pred.shape[0] * y_pred.shape[1])
+
+    def binary_cross_entropy_derivative(self, y_pred, y_true):
+        epsilon = 1e-15
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+        return (y_pred - y_true) / (y_pred * (1 - y_pred) + epsilon)
+
+    def categorical_cross_entropy_derivative(self, y_pred, y_true):
+        epsilon = 1e-15
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
+        return -y_true / y_pred
+
