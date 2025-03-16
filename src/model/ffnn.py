@@ -352,8 +352,8 @@ class FFNN:
         # Init Model Fit
         self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
         self.loss = np.zeros(epoch)
-        self.X = X
-        self.y = y
+        self.X = X.astype(float)
+        self.y = y.astype(float)
         self.lr = lr
 
         try:
@@ -369,7 +369,7 @@ class FFNN:
             if verbose == 1:
                 print("\033[92mEpoch ke-", i, "\033[0m")
             self.forward()
-            self.backward(X, y)
+            self.backward(self.X, self.y)
             self.update(lr)
             # if i < epoch - 1:
             #     self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
