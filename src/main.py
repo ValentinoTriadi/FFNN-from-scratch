@@ -36,7 +36,7 @@ def main():
     print(y_train.shape)
 
     # Training model
-    model.fit(X=X_train, y=y_train, batch=4, lr=0.1, epoch=400, verbose=1)
+    model.fit(X=X_train, y=y_train, batch=4, lr=0.1, epoch=38, verbose=1)
 
     # Print model
     # print(model)
