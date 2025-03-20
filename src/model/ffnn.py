@@ -380,8 +380,8 @@ class FFNN:
         """
         Melakukan prediksi data"
         """
-        self.X = X
-        return self.forward(last=True)[-1]
+        output = self.forward(last=True)
+        return np.argmax(output[-1], axis=1)
 
     def tampilkan_model(self):
         """
