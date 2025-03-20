@@ -45,12 +45,15 @@ class ActivationFunction:
         return (2 / (np.exp(x) - np.exp(-x))) ** 2
 
     def softmax(self, x):
-        exps = np.exp(x)
-        return exps / np.sum(exps, axis=0)
+        epsilon = 1e-10  
+        exps = np.exp(x - np.max(x, axis=1, keepdims=True))  
+        return exps / (np.sum(exps, axis=1, keepdims=True) + epsilon)
+
 
     def softmax_derivative(self, x):
-        # TODO: Implementasi turunan softmax
-        return x
+        s = self.softmax(x)
+        return s * (1 - s)  # Hanya elemen diagonal
+
 
     def get_activation_function(self, fungsi_aktivasi: ActivationFunctionMethod):
         match fungsi_aktivasi:
