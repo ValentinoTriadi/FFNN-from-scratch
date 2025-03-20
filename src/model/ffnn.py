@@ -86,6 +86,13 @@ class FFNN:
         # inisialisasi fungsi loss
         self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
 
+        self.X = None
+        self.y = None
+        self.bobot = None
+        self.hasil = None
+        self.loss = None
+        self.weight_history = []
+
         print("Model berhasil diinisialisasi")
 
     def __str__(self):
@@ -119,36 +126,51 @@ class FFNN:
         return ret
 
     def validate_input(self):
-        if self.jumlah_layer < 2:
-            raise ValueError("Jumlah layer minimal 3")
-        if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
-            raise ValueError(
-                "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
-            )
-        for i in range(self.jumlah_layer):
-            if (
-                self.fungsi_aktivasi_str[i]
-                not in ActivationFunction.global_fungsi_aktivasi
-            ):
-                raise ValueError(
-                    "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
-                )
-        if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
-            raise ValueError("Fungsi loss tidak valid")
-        if (
-            self.inisialisasi_bobot_str
-            not in WeightInitiation.global_inisialisasi_bobot
-        ):
-            raise ValueError("Metode inisialisasi bobot tidak valid")
+        # if self.jumlah_layer < 2:
+        #     raise ValueError("Jumlah layer minimal 3")
+        # if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
+        #     raise ValueError(
+        #         "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
+        #     )
+        # for i in range(self.jumlah_layer):
+        #     if (
+        #         self.fungsi_aktivasi_str[i]
+        #         not in ActivationFunction.global_fungsi_aktivasi
+        #     ):
+        #         raise ValueError(
+        #             "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
+        #         )
+        # if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
+        #     raise ValueError("Fungsi loss tidak valid")
+        # if (
+        #     self.inisialisasi_bobot_str
+        #     not in WeightInitiation.global_inisialisasi_bobot
+        # ):
+        #     raise ValueError("Metode inisialisasi bobot tidak valid")
+        # if hasattr(self, "y") and self.y is not None:
+        #     if self.y.shape[1] != self.jumlah_neuron[-1]:
+        #         raise ValueError(
+        #             "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
+        #         )
+        # if hasattr(self, "X") and self.X is not None:
+        #     if self.X.shape[1] != self.jumlah_neuron[0]:
+        #         raise ValueError("Jumlah neuron pada layer input tidak sesuai dengan X")
+
+        # return True
         if hasattr(self, "y") and self.y is not None:
-            if self.y.shape[0] != self.jumlah_neuron[-1]:
+            if self.y.shape[1] != self.jumlah_neuron[-1]:
                 raise ValueError(
-                    "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
+                    "Jumlah neuron pada layer terakhir tidak sesuai dengan y (y.shape[1] harus {})".format(
+                        self.jumlah_neuron[-1]
+                    )
                 )
         if hasattr(self, "X") and self.X is not None:
             if self.X.shape[1] != self.jumlah_neuron[0]:
-                raise ValueError("Jumlah neuron pada layer input tidak sesuai dengan X")
-
+                raise ValueError(
+                    "Jumlah neuron pada layer input tidak sesuai dengan X (X.shape[1] harus {})".format(
+                        self.jumlah_neuron[0]
+                    )
+                )
         return True
 
     def init_bobot(self):
@@ -212,13 +234,13 @@ class FFNN:
                         self.bobot[i],
                     )
             else:
-                hasilSebelumnya = (
+                prev_output = (
                     self.hasil[self.current_epoch][i - 1] if not last else pred[i - 1]
                 )
                 XWithBias = np.hstack(
                     (
-                        np.ones((hasilSebelumnya.shape[0], 1)),
-                        hasilSebelumnya,
+                        np.ones((prev_output.shape[0], 1)),
+                        prev_output,
                     )
                 )
 
@@ -260,9 +282,14 @@ class FFNN:
                 self.fungsi_aktivasi_str[-1]
             )
         )
-        self.deltas[-1] = (
-            self.hasil[self.current_epoch][-1] - y
-        ) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
+
+        if("Softmax" in self.fungsi_aktivasi_str and "CategoricalCrossEntropy" in self.fungsi_loss_str):
+            self.deltas[-1] = self.hasil[self.current_epoch][-1] - y
+        
+        else:
+            self.deltas[-1] = (
+                self.hasil[self.current_epoch][-1] - y
+            ) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
 
         # Hitung delta untuk hidden layer (dari belakang ke depan)
         for i in range(
@@ -299,6 +326,7 @@ class FFNN:
                 "weights": weight_grad[1:],  # Semua kecuali baris pertama (bias)
                 "bias": weight_grad[0:1],  # Hanya baris pertama (bias)
             }
+        
 
     def update(self, lr: float):
         """
@@ -340,7 +368,7 @@ class FFNN:
             1 = Menampilkan progress bar
         """
         # Init Model Fit
-        self.hasil = [np.empty(self.jumlah_layer, dtype=object) for i in range(epoch)]
+
         self.loss = np.zeros(epoch)
         self.X = X
         self.y = y
@@ -354,17 +382,40 @@ class FFNN:
 
         self.init_bobot()
 
-        for i in range(epoch):
-            self.current_epoch = i
+        self.hasil =  [np.empty(self.jumlah_layer, dtype=object) for _ in range(epoch)]
+
+        self.loss = np.zeros(epoch)
+
+        num_samples = X.shape[0]
+        for ep in range(epoch):
+            self.current_epoch = ep
+            epoch_loss = 0
+            # Acak data di awal setiap epoch
+            indices = np.arange(num_samples)
+            np.random.shuffle(indices)
+            X_shuffled = X[indices]
+            y_shuffled = y[indices]
+            num_batches = int(np.ceil(num_samples / batch))
+            for b in range(num_batches):
+                start = b * batch
+                end = min(num_samples, (b + 1) * batch)
+                X_batch = X_shuffled[start:end]
+                y_batch = y_shuffled[start:end]
+                self.X = X_batch
+                self.y = y_batch
+                # Inisialisasi hasil untuk batch saat ini
+                self.hasil[self.current_epoch] = [None] * self.jumlah_layer
+                self.forward()
+                epoch_loss += self.loss[self.current_epoch]
+                self.backward(X_batch, y_batch)
+                self.update(lr)
+            # Rata-rata loss tiap epoch
+            self.loss[self.current_epoch] = epoch_loss / num_batches
+            # Simpan bobot untuk epoch ini
+            self.weight_history.append([layer.copy() for layer in self.bobot])
             if verbose == 1:
-                print("\033[92mEpoch ke-", i, "\033[0m")
-            self.forward()
-            self.backward(X, y)
-            self.update(lr)
-            # if i < epoch - 1:
-            #     self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
-            if verbose == 1:
-                print("Loss: ", self.loss[i])
+                print("\033[92mEpoch ke-\033[0m", ep, "Loss:", self.loss[self.current_epoch])
+        
 
     def predict(self, X: np.ndarray):
         """

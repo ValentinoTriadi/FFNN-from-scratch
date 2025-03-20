@@ -44,8 +44,8 @@ class ActivationFunction:
     def tanh_derivative(self, x):
         return (2 / (np.exp(x) - np.exp(-x))) ** 2
 
-    def softmax(self, x, i):
-        exps = np.exp(x[i])
+    def softmax(self, x):
+        exps = np.exp(x)
         return exps / np.sum(np.exp(x), axis=0)
 
     def softmax_derivative(self, x):
