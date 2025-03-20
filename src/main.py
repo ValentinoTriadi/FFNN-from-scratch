@@ -4,11 +4,14 @@ from src.model.ffnn2 import (
     ActivationFunctionMethod,
     LossFunctionMethod,
 )
+import sys
 import numpy as np
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import f1_score  # Tambahkan import F1-score
+from src.view.gui import GUI, GraphModel
+from PyQt6.QtWidgets import QApplication
 
 def main():
     train_samples = 5000
@@ -56,5 +59,14 @@ def main():
     f1 = f1_score(y_test_labels, pred, average="macro")
     print(f"F1-Score: {f1:.4f}")
 
+    print(model.bobot[-1])
+
+    # graph_model = GraphModel()
+    # graph_model.create_from_layers()
+    # app = QApplication(sys.argv)
+    # gui = GUI(graph_model)
+    # sys.exit(app.exec())
+
 if __name__ == "__main__":
     main()
+
