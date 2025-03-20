@@ -5,27 +5,51 @@ from src.model.ffnn2 import (
     LossFunctionMethod,
 )
 import numpy as np
+import os
+import pickle
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import f1_score
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+import time
+
+MODEL_FILENAME = "ffnn_model.pkl"
+
+def save_model(model, filename):
+    """Simpan model ke file."""
+    with open(filename, "wb") as file:
+        pickle.dump(model, file)
+    print(f"Model berhasil disimpan ke {filename}")
+
+def load_model(filename):
+    """Load model dari file."""
+    with open(filename, "rb") as file:
+        model = pickle.load(file)
+    print(f"Model berhasil dimuat dari {filename}")
+    return model
 
 def main():
     train_samples = 5000
 
-    # Inisialisasi model
-    model = FFNN2(
-        jumlah_neuron=[784, 128, 64, 64, 10],
-        fungsi_aktivasi=["ReLU", "ReLU", "ReLU", "Softmax"],
-        fungsi_loss="CategoricalCrossEntropy",
-        inisialisasi_bobot="xavier-normal",
-        seed=123123,
-        lower_bound=-1,
-        upper_bound=1,
-        mean=0,
-        std=1,
-    )
+    # Cek apakah model sudah ada
+    if os.path.exists(MODEL_FILENAME):
+        model = load_model(MODEL_FILENAME)
+        train_needed = False
+    else:
+        train_needed = True
+        # Inisialisasi model
+        model = FFNN2(
+            jumlah_neuron=[784, 128, 64, 64, 10],
+            fungsi_aktivasi=["ReLU", "ReLU", "ReLU", "Softmax"],
+            fungsi_loss="CategoricalCrossEntropy",
+            inisialisasi_bobot="xavier-normal",
+            seed=123123,
+            lower_bound=-1,
+            upper_bound=1,
+            mean=0,
+            std=1,
+        )
 
     # Load MNIST dataset
     X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
@@ -41,8 +65,19 @@ def main():
 
     print(y_train.shape)
 
-    # Training model
-    model.fit(X=X_train, y=y_train, batch_size=100, lr=1, epochs=100)
+    if train_needed:
+        # Catat waktu mulai training
+        start_time = time.time()
+
+        # Training model
+        model.fit(X=X_train, y=y_train, batch_size=100, lr=1, epochs=50)
+
+        # Catat waktu selesai training
+        end_time = time.time()
+        print(f"Training time: {end_time - start_time:.2f} seconds")
+
+        # Simpan model setelah training
+        save_model(model, MODEL_FILENAME)
 
     # Prediksi
     pred = model.predict(X_test)
@@ -50,23 +85,23 @@ def main():
     # Konversi y_test dari one-hot encoding ke label asli
     y_test_labels = np.argmax(y_test, axis=1)
 
-    # F1-score
+    # Hitung F1-score
     f1 = f1_score(y_test_labels, pred, average="macro")
     print(f"F1-Score: {f1:.4f}")
 
     # Menampilkan gambar beserta label asli dan prediksi
-    num_images = 10  #jumlah gambar yang ditampilin
-    indices = np.random.choice(len(X_test), num_images, replace=False)  
+    # num_images = 10  # Jumlah gambar yang ditampilkan
+    # indices = np.random.choice(len(X_test), num_images, replace=False)
 
-    plt.figure(figsize=(10, 5))
-    for i, idx in enumerate(indices):
-        plt.subplot(2, 5, i + 1)
-        plt.imshow(X_test[idx].reshape(28, 28), cmap="gray") 
-        plt.axis("off")
-        plt.title(f"True: {y_test_labels[idx]}\nPred: {pred[idx]}", fontsize=10)
+    # plt.figure(figsize=(10, 5))
+    # for i, idx in enumerate(indices):
+    #     plt.subplot(2, 5, i + 1)
+    #     plt.imshow(X_test[idx].reshape(28, 28), cmap="gray")
+    #     plt.axis("off")
+    #     plt.title(f"True: {y_test_labels[idx]}\nPred: {pred[idx]}", fontsize=10)
 
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    # plt.show()
 
 if __name__ == "__main__":
     main()

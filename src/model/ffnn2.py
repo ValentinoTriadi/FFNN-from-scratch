@@ -1,4 +1,6 @@
+import pickle
 import numpy as np
+import matplotlib.pyplot as plt
 from src.utils.activationFunction import ActivationFunction, ActivationFunctionMethod
 from src.utils.lossFunction import LossFunction, LossFunctionMethod
 from src.utils.weightInitiation import WeightInitiation, WeightInitiationMethod
@@ -21,7 +23,8 @@ class FFNN2:
         self.fungsi_aktivasi = [ActivationFunction([method]).get_activation_function(method) for method in fungsi_aktivasi]
 
 
-        self.fungsi_loss = LossFunction(fungsi_loss).get_lost_function()
+        self.fungsi_loss_class = LossFunction(fungsi_loss)
+        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
 
         self.inisialisasi_bobot = WeightInitiation(inisialisasi_bobot, self.jumlah_layer, jumlah_neuron)
 
@@ -30,8 +33,8 @@ class FFNN2:
 
     def init_bobot(self):
         self.bobot = self.inisialisasi_bobot.init_weights()
-        for i in range(self.jumlah_layer):
-            print(f"Shape bobot layer {i}: {self.bobot[i].shape}") 
+        # for i in range(self.jumlah_layer):
+            # print(f"Shape bobot layer {i}: {self.bobot[i].shape}") 
 
     def forward(self, X):
         hasil = [X]
@@ -43,9 +46,10 @@ class FFNN2:
 
     def backward(self, hasil, y):
         deltas = [None] * self.jumlah_layer
+        loss_derivative = self.fungsi_loss_class.get_loss_derivative()
         activation_derivative = ActivationFunction(self.fungsi_aktivasi_str).get_activation_derivative(self.fungsi_aktivasi_str[-1])
 
-        deltas[-1] = (hasil[-1] - y) * activation_derivative(hasil[-1])
+        deltas[-1] = loss_derivative(hasil[-1], y) * activation_derivative(hasil[-1])
         
         for i in range(self.jumlah_layer - 2, -1, -1):
             activation_derivative_i = ActivationFunction(self.fungsi_aktivasi_str).get_activation_derivative(self.fungsi_aktivasi_str[i])
@@ -63,10 +67,9 @@ class FFNN2:
             self.bobot[i] -= lr * gradients[i]
 
     def fit(self, X, y, batch_size, lr, epochs):
-        num_samples = X.shape[0]  # Jumlah total data
+        num_samples = X.shape[0]  
 
         for epoch in range(epochs):
-            # Acak indeks dataset tiap epoch untuk meningkatkan generalisasi
             indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
@@ -83,7 +86,7 @@ class FFNN2:
                 # Update bobot
                 self.update(gradients, lr)
 
-            # Hitung loss setelah satu epoch
+            # loss per epoch
             hasil_final = self.forward(X)
             loss = self.fungsi_loss(hasil_final[-1], y)
             print(f"Epoch {epoch+1}/{epochs} - Loss: {loss:.6f}")
@@ -91,3 +94,104 @@ class FFNN2:
 
     def predict(self, X):
         return np.argmax(self.forward(X)[-1], axis=1)
+
+    def save_model_pickle(self, filename: str):
+        """
+        Menyimpan model ke dalam file menggunakan pickle.
+        
+        @param filename: str
+            Nama file untuk menyimpan model (format .pkl)
+        """
+        model_data = {
+            "jumlah_neuron": self.jumlah_neuron,
+            "jumlah_layer": self.jumlah_layer,
+            "fungsi_aktivasi_str": self.fungsi_aktivasi_str,
+            "fungsi_loss_str": self.fungsi_loss_str,
+            "inisialisasi_bobot_str": self.inisialisasi_bobot_str,
+            "history_weights": self.history_weights,  # Bobot per epoch (numpy array)
+            "history_gradients": self.history_gradients,  # Gradien per epoch (numpy array)
+            "history_loss": self.history_loss,  # Loss per epoch
+            "lr": self.lr if hasattr(self, "lr") else None
+        }
+
+        with open(filename, "wb") as file:
+            pickle.dump(model_data, file)
+
+        print(f"Model berhasil disimpan ke {filename}")
+
+    def load_model_pickle(self, filename: str):
+        """
+        Memuat model dari file pickle (.pkl).
+        
+        @param filename: str
+            Nama file model yang akan dimuat
+        """
+        with open(filename, "rb") as file:
+            model_data = pickle.load(file)
+
+        # Set ulang parameter model
+        self.jumlah_neuron = model_data["jumlah_neuron"]
+        self.jumlah_layer = model_data["jumlah_layer"]
+        self.fungsi_aktivasi_str = model_data["fungsi_aktivasi_str"]
+        self.fungsi_loss_str = model_data["fungsi_loss_str"]
+        self.inisialisasi_bobot_str = model_data["inisialisasi_bobot_str"]
+        self.history_weights = model_data["history_weights"]
+        self.history_gradients = model_data["history_gradients"]
+        self.history_loss = model_data["history_loss"]
+        self.lr = model_data["lr"]
+
+        # Set bobot terakhir ke model
+        self.bobot = self.history_weights[-1]
+
+        print(f"Model berhasil dimuat dari {filename}")
+
+
+
+    def tampilkan_distribusi_bobot(self, layer: list[int]):
+        """
+        Menampilkan histogram distribusi bobot dari layer tertentu.
+
+        @param layer: list[int]
+            List indeks layer yang ingin ditampilkan distribusi bobotnya.
+        """
+        plt.figure(figsize=(10, 5))
+        for i, l in enumerate(layer):
+            if l >= self.jumlah_layer:
+                print(f"Layer {l} tidak valid")
+                continue
+
+            plt.subplot(1, len(layer), i + 1)
+            plt.hist(self.bobot[l].flatten(), bins=50, color="blue", alpha=0.7)
+            plt.title(f"Distribusi Bobot Layer {l}")
+            plt.xlabel("Nilai Bobot")
+            plt.ylabel("Frekuensi")
+
+        plt.tight_layout()
+        plt.show()
+
+    def tampilkan_distribusi_gradient_bobot(self, layer: list[int]):
+        """
+        Menampilkan histogram distribusi gradient bobot dari layer tertentu.
+
+        @param layer: list[int]
+            List indeks layer yang ingin ditampilkan distribusi gradient bobotnya.
+        """
+        if not hasattr(self, "gradients") or self.gradients is None:
+            print("Gradien belum dihitung! Jalankan training dulu.")
+            return
+
+        plt.figure(figsize=(10, 5))
+        for i, l in enumerate(layer):
+            if l >= self.jumlah_layer:
+                print(f"Layer {l} tidak valid")
+                continue
+
+            plt.subplot(1, len(layer), i + 1)
+            gradient_data = self.gradients[l]["weights"].flatten()
+            plt.hist(gradient_data, bins=50, color="red", alpha=0.7)
+            plt.title(f"Distribusi Gradien Layer {l}")
+            plt.xlabel("Nilai Gradien")
+            plt.ylabel("Frekuensi")
+
+        plt.tight_layout()
+        plt.show()
