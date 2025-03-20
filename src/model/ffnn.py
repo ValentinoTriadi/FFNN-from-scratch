@@ -216,11 +216,15 @@ class FFNN:
         pred = np.empty(self.jumlah_layer, dtype=object)
         for i in range(self.jumlah_layer):
             if i == 0:
-                XWithBias = np.hstack(
-                    (
-                        np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
-                        self.X,
-                    )
+                XWithBias = np.clip(
+                    np.hstack(
+                        (
+                            np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
+                            self.X,
+                        )
+                    ),
+                    0.0001,
+                    None,
                 )
 
                 if not last:
@@ -237,11 +241,15 @@ class FFNN:
                 prev_output = (
                     self.hasil[self.current_epoch][i - 1] if not last else pred[i - 1]
                 )
-                XWithBias = np.hstack(
-                    (
-                        np.ones((prev_output.shape[0], 1)),
-                        prev_output,
-                    )
+                XWithBias = np.clip(
+                    np.hstack(
+                        (
+                            np.ones((hasilSebelumnya.shape[0], 1)),
+                            hasilSebelumnya,
+                        )
+                    ),
+                    0.0001,
+                    None,
                 )
 
                 if not last:
@@ -340,6 +348,8 @@ class FFNN:
                     (self.gradients[i]["bias"], self.gradients[i]["weights"])
                 )
 
+                self.bobot[i] = np.clip(self.bobot[i], 0.0001, None)
+
     def fit(
         self,
         X: np.ndarray,
@@ -370,8 +380,8 @@ class FFNN:
         # Init Model Fit
 
         self.loss = np.zeros(epoch)
-        self.X = X
-        self.y = y
+        self.X = X.astype(float)
+        self.y = y.astype(float)
         self.lr = lr
 
         try:
@@ -414,15 +424,21 @@ class FFNN:
             # Simpan bobot untuk epoch ini
             self.weight_history.append([layer.copy() for layer in self.bobot])
             if verbose == 1:
-                print("\033[92mEpoch ke-\033[0m", ep, "Loss:", self.loss[self.current_epoch])
-        
+                print("\033[92mEpoch ke-", i, "\033[0m")
+            self.forward()
+            self.backward(self.X, self.y)
+            self.update(lr)
+            # if i < epoch - 1:
+            #     self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
+            if verbose == 1:
+                print("Loss: ", self.loss[i])
 
     def predict(self, X: np.ndarray):
         """
         Melakukan prediksi data"
         """
-        self.X = X
-        return self.forward(last=True)[-1]
+        output = self.forward(last=True)
+        return np.argmax(output[-1], axis=1)
 
     def tampilkan_model(self):
         """
