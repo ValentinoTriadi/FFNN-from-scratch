@@ -1,9 +1,4 @@
-from src.model.ffnn2 import (
-    FFNN2,
-    WeightInitiationMethod,
-    ActivationFunctionMethod,
-    LossFunctionMethod,
-)
+from src.model.ffnn2 import FFNN2
 import numpy as np
 import os
 import pickle
@@ -15,6 +10,7 @@ import matplotlib.pyplot as plt
 import time
 
 MODEL_FILENAME = "ffnn_model.pkl"
+
 
 def main():
     train_samples = 5000
@@ -29,6 +25,7 @@ def main():
         upper_bound=1,
         mean=0,
         std=1,
+        verbose=1,
     )
 
     # Cek apakah model sudah ada
@@ -56,7 +53,7 @@ def main():
         start_time = time.time()
 
         # Training model
-        model.fit(X=X_train, y=y_train, batch_size=100, lr=1, epochs=50)
+        model.fit(X=X_train, y=y_train, batch=100, lr=0.1, epochs=500)
 
         # Catat waktu selesai training
         end_time = time.time()

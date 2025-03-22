@@ -1,10 +1,11 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utils.activationFunction import ActivationFunction, ActivationFunctionMethod
-from src.utils.lossFunction import LossFunction, LossFunctionMethod
-from src.utils.weightInitiation import WeightInitiation, WeightInitiationMethod
-
+import concurrent.futures
+from src.utils.activationFunction import ActivationFunction
+from src.utils.lossFunction import LossFunction
+from src.utils.weightInitiation import WeightInitiation
+import time
 
 class FFNN2:
     def __init__(
@@ -13,12 +14,14 @@ class FFNN2:
         fungsi_aktivasi,
         fungsi_loss,
         inisialisasi_bobot,
+        verbose=0,
         lower_bound=-1.0,
         upper_bound=1.0,
         mean=0.0,
         std=1.0,
         seed=0,
     ):
+        self.verbose = verbose
         self.jumlah_neuron = jumlah_neuron
         self.jumlah_layer = len(jumlah_neuron) - 1
         self.fungsi_aktivasi = [
@@ -78,30 +81,43 @@ class FFNN2:
         for i in range(self.jumlah_layer):
             self.bobot[i] -= lr * gradients[i]
 
-    def fit(self, X, y, batch_size, lr, epochs):
+    def fit(self, X, y, batch, lr, epochs):
         num_samples = X.shape[0]
+        now = time.time()
 
         for epoch in range(epochs):
             indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
 
-            # Proses dalam batch
-            for i in range(0, num_samples, batch_size):
-                X_batch = X_shuffled[i : i + batch_size]
-                y_batch = y_shuffled[i : i + batch_size]
+            def process_batch(start_idx):
+                end_idx = start_idx + batch
+                X_batch = X_shuffled[start_idx:end_idx]
+                y_batch = y_shuffled[start_idx:end_idx]
 
                 # Forward & Backward per batch
                 hasil = self.forward(X_batch)
                 gradients = self.backward(hasil, y_batch)
 
-                # Update bobot
-                self.update(gradients, lr)
+                return gradients
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for i in range(0, num_samples, batch):
+                    gradients = executor.submit(process_batch, i).result()
+                    # Update bobot
+                    self.update(gradients, lr)
 
             # loss per epoch
             hasil_final = self.forward(X)
             loss = self.fungsi_loss(hasil_final[-1], y)
-            print(f"Epoch {epoch+1}/{epochs} - Loss: {loss:.6f}")
+            if self.verbose == 1:
+                print(
+                    f"\r[{('█' * int(50 * (epoch + 1) / epochs)).ljust(50,'░')}] - {epoch+1}/{epochs} - {(epoch+1)*100/epochs}% - {(time.time() - now):.2f} s",
+                    end="",
+                    flush=True,
+                )
+        if self.verbose == 1:
+            print(f"\nLoss: {loss:.6f}")
 
     def predict(self, X):
         return np.argmax(self.forward(X)[-1], axis=1)

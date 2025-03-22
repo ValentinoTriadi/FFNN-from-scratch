@@ -35,6 +35,7 @@ def test_main():
         upper_bound=1,
         mean=0,
         std=1,
+        verbose=1,
     )
 
     # Cek apakah model sudah ada
@@ -62,7 +63,7 @@ def test_main():
         start_time = time.time()
 
         # Training model
-        model.fit(X=X_train, y=y_train, batch_size=100, lr=1, epochs=50)
+        model.fit(X=X_train, y=y_train, batch=100, lr=0.1, epochs=500)
 
         # Catat waktu selesai training
         end_time = time.time()
@@ -91,21 +92,20 @@ def test_main():
             Dense(10, activation="softmax"),
         ]
     )
-    tensor_model.compile(
-        loss="categorical_crossentropy", metrics=["accuracy"]
-    )
+    tensor_model.compile(loss="categorical_crossentropy", metrics=["accuracy"])
 
     tensor_model.fit(
         X_train,
         y_train,
-        # batch_size=4,
-        epochs=50,
+        batch_size=100,
+        epochs=200,
         verbose=0,
         validation_data=(X_test, y_test),
     )
 
     tensor_model_accuracy = tensor_model.evaluate(X_test, y_test, verbose=1)[1]
     print(f"Tensor Accuracy: {tensor_model_accuracy:.4f}")
+
 
 if __name__ == "__main__":
     test_main()
