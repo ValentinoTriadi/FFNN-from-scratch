@@ -1,22 +1,28 @@
-from src.model.ffnn2 import (
-    FFNN2,
-    WeightInitiationMethod,
-    ActivationFunctionMethod,
-    LossFunctionMethod,
-)
 import numpy as np
-import os
-import pickle
+import os, sys
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import time
+from sklearn.neural_network import MLPClassifier
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Input
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+from src.model.ffnn2 import FFNN2
+
 
 MODEL_FILENAME = "ffnn_model.pkl"
 
-def main():
+
+def test_main():
     train_samples = 5000
 
     model = FFNN2(
@@ -72,9 +78,34 @@ def main():
     y_test_labels = np.argmax(y_test, axis=1)
 
     # Hitung F1-score
-    model_f1 = f1_score(y_test_labels, pred, average="macro")
-    print(f"Model F1-Score: {model_f1:.4f}")
+    model_accuracy = accuracy_score(y_test_labels, pred)
+    print(f"Model Accuracy: {model_accuracy:.4f}")
 
+    # Compare with tensor
+    tensor_model = Sequential(
+        [
+            Input(shape=(784,)),
+            Dense(128, activation="relu"),
+            Dense(64, activation="relu"),
+            Dense(64, activation="relu"),
+            Dense(10, activation="softmax"),
+        ]
+    )
+    tensor_model.compile(
+        loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+
+    tensor_model.fit(
+        X_train,
+        y_train,
+        # batch_size=4,
+        epochs=50,
+        verbose=0,
+        validation_data=(X_test, y_test),
+    )
+
+    tensor_model_accuracy = tensor_model.evaluate(X_test, y_test, verbose=1)[1]
+    print(f"Tensor Accuracy: {tensor_model_accuracy:.4f}")
 
 if __name__ == "__main__":
-    main()
+    test_main()

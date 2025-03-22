@@ -5,6 +5,7 @@ from src.utils.activationFunction import ActivationFunction, ActivationFunctionM
 from src.utils.lossFunction import LossFunction, LossFunctionMethod
 from src.utils.weightInitiation import WeightInitiation, WeightInitiationMethod
 
+
 class FFNN2:
     def __init__(
         self,
@@ -20,13 +21,19 @@ class FFNN2:
     ):
         self.jumlah_neuron = jumlah_neuron
         self.jumlah_layer = len(jumlah_neuron) - 1
-        self.fungsi_aktivasi = [ActivationFunction([method]).get_activation_function(method) for method in fungsi_aktivasi]
-
+        self.fungsi_aktivasi = [
+            ActivationFunction([method]).get_activation_function(method)
+            for method in fungsi_aktivasi
+        ]
 
         self.fungsi_loss_class = LossFunction(fungsi_loss)
         self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
+        self.fungsi_loss_str = fungsi_loss
 
-        self.inisialisasi_bobot = WeightInitiation(inisialisasi_bobot, self.jumlah_layer, jumlah_neuron)
+        self.inisialisasi_bobot_str = inisialisasi_bobot
+        self.inisialisasi_bobot = WeightInitiation(
+            inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
+        )
 
         self.init_bobot()
         self.fungsi_aktivasi_str = fungsi_aktivasi
@@ -34,7 +41,7 @@ class FFNN2:
     def init_bobot(self):
         self.bobot = self.inisialisasi_bobot.init_weights()
         # for i in range(self.jumlah_layer):
-            # print(f"Shape bobot layer {i}: {self.bobot[i].shape}") 
+        # print(f"Shape bobot layer {i}: {self.bobot[i].shape}")
 
     def forward(self, X):
         hasil = [X]
@@ -47,15 +54,20 @@ class FFNN2:
     def backward(self, hasil, y):
         deltas = [None] * self.jumlah_layer
         loss_derivative = self.fungsi_loss_class.get_loss_derivative()
-        activation_derivative = ActivationFunction(self.fungsi_aktivasi_str).get_activation_derivative(self.fungsi_aktivasi_str[-1])
+        activation_derivative = ActivationFunction(
+            self.fungsi_aktivasi_str
+        ).get_activation_derivative(self.fungsi_aktivasi_str[-1])
 
         deltas[-1] = loss_derivative(hasil[-1], y) * activation_derivative(hasil[-1])
-        
-        for i in range(self.jumlah_layer - 2, -1, -1):
-            activation_derivative_i = ActivationFunction(self.fungsi_aktivasi_str).get_activation_derivative(self.fungsi_aktivasi_str[i])
-            deltas[i] = (deltas[i + 1] @ self.bobot[i + 1][1:].T) * activation_derivative_i(hasil[i + 1])
 
-        
+        for i in range(self.jumlah_layer - 2, -1, -1):
+            activation_derivative_i = ActivationFunction(
+                self.fungsi_aktivasi_str
+            ).get_activation_derivative(self.fungsi_aktivasi_str[i])
+            deltas[i] = (
+                deltas[i + 1] @ self.bobot[i + 1][1:].T
+            ) * activation_derivative_i(hasil[i + 1])
+
         gradients = []
         for i in range(self.jumlah_layer):
             X_with_bias = np.hstack([np.ones((hasil[i].shape[0], 1)), hasil[i]])
@@ -67,7 +79,7 @@ class FFNN2:
             self.bobot[i] -= lr * gradients[i]
 
     def fit(self, X, y, batch_size, lr, epochs):
-        num_samples = X.shape[0]  
+        num_samples = X.shape[0]
 
         for epoch in range(epochs):
             indices = np.random.permutation(num_samples)
@@ -76,8 +88,8 @@ class FFNN2:
 
             # Proses dalam batch
             for i in range(0, num_samples, batch_size):
-                X_batch = X_shuffled[i:i + batch_size]
-                y_batch = y_shuffled[i:i + batch_size]
+                X_batch = X_shuffled[i : i + batch_size]
+                y_batch = y_shuffled[i : i + batch_size]
 
                 # Forward & Backward per batch
                 hasil = self.forward(X_batch)
@@ -91,14 +103,13 @@ class FFNN2:
             loss = self.fungsi_loss(hasil_final[-1], y)
             print(f"Epoch {epoch+1}/{epochs} - Loss: {loss:.6f}")
 
-
     def predict(self, X):
         return np.argmax(self.forward(X)[-1], axis=1)
 
     def save_model_pickle(self, filename: str):
         """
         Menyimpan model ke dalam file menggunakan pickle.
-        
+
         @param filename: str
             Nama file untuk menyimpan model (format .pkl)
         """
@@ -108,10 +119,8 @@ class FFNN2:
             "fungsi_aktivasi_str": self.fungsi_aktivasi_str,
             "fungsi_loss_str": self.fungsi_loss_str,
             "inisialisasi_bobot_str": self.inisialisasi_bobot_str,
-            "history_weights": self.history_weights,  # Bobot per epoch (numpy array)
-            "history_gradients": self.history_gradients,  # Gradien per epoch (numpy array)
-            "history_loss": self.history_loss,  # Loss per epoch
-            "lr": self.lr if hasattr(self, "lr") else None
+            "bobot": self.bobot,
+            "lr": self.lr if hasattr(self, "lr") else None,
         }
 
         with open(filename, "wb") as file:
@@ -119,10 +128,11 @@ class FFNN2:
 
         print(f"Model berhasil disimpan ke {filename}")
 
+    @staticmethod
     def load_model_pickle(self, filename: str):
         """
         Memuat model dari file pickle (.pkl).
-        
+
         @param filename: str
             Nama file model yang akan dimuat
         """
@@ -135,17 +145,22 @@ class FFNN2:
         self.fungsi_aktivasi_str = model_data["fungsi_aktivasi_str"]
         self.fungsi_loss_str = model_data["fungsi_loss_str"]
         self.inisialisasi_bobot_str = model_data["inisialisasi_bobot_str"]
-        self.history_weights = model_data["history_weights"]
-        self.history_gradients = model_data["history_gradients"]
-        self.history_loss = model_data["history_loss"]
+        self.bobot = model_data["bobot"]
         self.lr = model_data["lr"]
 
-        # Set bobot terakhir ke model
-        self.bobot = self.history_weights[-1]
+        self.fungsi_aktivasi = [
+            ActivationFunction([method]).get_activation_function(method)
+            for method in self.fungsi_aktivasi_str
+        ]
+        self.fungsi_loss_class = LossFunction(self.fungsi_loss_str)
+        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
+        self.inisialisasi_bobot = WeightInitiation(
+            self.inisialisasi_bobot_str, self.jumlah_layer, self.jumlah_neuron
+        )
 
         print(f"Model berhasil dimuat dari {filename}")
 
-
+        return self
 
     def tampilkan_distribusi_bobot(self, layer: list[int]):
         """

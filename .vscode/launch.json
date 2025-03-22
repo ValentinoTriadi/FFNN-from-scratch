@@ -9,6 +9,12 @@
       "type": "debugpy",
       "request": "launch",
       "module": "src.main"
+    },
+    {
+      "name": "test main",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "src.test.test_main"
     }
   ]
 }
