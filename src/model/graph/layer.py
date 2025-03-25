@@ -1,25 +1,35 @@
 from typing import List
 from src.model.graph.node import GraphNode
+from src.config.graphConfig import GraphConfig
 import numpy as np
+
 class GraphLayer:
-    def __init__(self, layer_name: str, node_texts: list, x_position: float,
+    bias_idx = 1
+    def __init__(self, index : int, neuron_num: int, text_pre_header: str, x_position: float,
                  node_color: str, edge_color: str, y_range: tuple = (0, 10)):
-        self.layer_name = layer_name
-        self.node_texts = node_texts
+        
+        self.index = index
+        self.text_pre_header = text_pre_header
         self.x_position = x_position
         self.node_color = node_color
         self.edge_color = edge_color
-        self.nodes : List[GraphNode] = []
+        self.neuron_num = neuron_num
+        self.nodes: List[GraphNode] = []
         self._calculate_positions(y_range)
 
     def _calculate_positions(self, y_range: tuple):
         start, end = y_range
-        n = len(self.node_texts)
-
-        if n == 1:
-            y_pos = [(start/end) / 2]
-        else:
-            y_pos = np.linspace(start,end, n)
-        for i, y in enumerate(y_pos):
-            node = GraphNode(f"{self.node_texts[i]}", (self.x_position, y), self.node_color)
+        y_pos = np.linspace(start, end, self.neuron_num)
+    
+        for i in range(self.neuron_num):
+            pos = (self.x_position, y_pos[i])
+            title = self.text_pre_header
+            idx = i 
+            if(self.text_pre_header != "Output" and i == 0):
+                title = "Bias"
+                idx = GraphLayer.bias_idx
+                GraphLayer.bias_idx += 1
+                
+            node = GraphNode(f"{title}-{idx}", pos, self.node_color)
             self.nodes.append(node)
+    

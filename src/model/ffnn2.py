@@ -24,6 +24,7 @@ class FFNN2:
         self.fungsi_loss = LossFunction(fungsi_loss).get_lost_function()
 
         self.inisialisasi_bobot = WeightInitiation(inisialisasi_bobot, self.jumlah_layer, jumlah_neuron)
+        self.gradients = []
 
         self.init_bobot()
         self.fungsi_aktivasi_str = fungsi_aktivasi
@@ -60,7 +61,7 @@ class FFNN2:
 
     def update(self, gradients, lr):
         for i in range(self.jumlah_layer):
-            self.bobot[i] -= lr * gradients[i]
+            self.bobot[i] -= lr * gradients[i] 
 
     def fit(self, X, y, batch_size, lr, epochs):
         num_samples = X.shape[0]  # Jumlah total data
@@ -80,6 +81,7 @@ class FFNN2:
                 hasil = self.forward(X_batch)
                 gradients = self.backward(hasil, y_batch)
 
+                self.gradients = gradients
                 # Update bobot
                 self.update(gradients, lr)
 

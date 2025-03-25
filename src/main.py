@@ -4,19 +4,21 @@ from src.model.ffnn2 import (
     ActivationFunctionMethod,
     LossFunctionMethod,
 )
+
+from src.view.gui import GUI, GraphModel
+from PyQt6.QtWidgets import QApplication
 import sys
 import numpy as np
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import f1_score  # Tambahkan import F1-score
-from src.view.gui import GUI, GraphModel
-from PyQt6.QtWidgets import QApplication
+from sklearn.metrics import f1_score
+
 
 def main():
     train_samples = 5000
-
     # Inisialisasi model
+    
     model = FFNN2(
         jumlah_neuron=[784, 128, 64, 64, 10],
         fungsi_aktivasi=["ReLU", "ReLU", "ReLU", "Softmax"],
@@ -29,7 +31,7 @@ def main():
         std=1,
     )
 # # 
-#     X = np.array([[0, 0, 0], [4, 1, 2], [992, -992, 122], [3, 3, 3], [4, 4, 4]])
+    X_tryW = np.array([[0, 0, 0], [4, 1, 2], [992, -992, 122], [3, 3, 3], [4, 4, 4]])
 #     y = np.array([0, 1, 2, 3, 4])
 
     # Load MNIST dataset
@@ -47,7 +49,7 @@ def main():
     print(y_train.shape)
 
     # Training model
-    model.fit(X=X_train, y=y_train, batch_size=100, lr=0.005, epochs=2000)
+    model.fit(X=X_train, y=y_train, batch_size=2, lr=1, epochs=2)
 
     # Prediksi
     pred = model.predict(X_test)
@@ -55,18 +57,31 @@ def main():
     # Konversi y_test dari one-hot encoding ke label asli
     y_test_labels = np.argmax(y_test, axis=1)
 
-    # Hitung F1-score
+    # F1-score
     f1 = f1_score(y_test_labels, pred, average="macro")
     print(f"F1-Score: {f1:.4f}")
 
-    print(model.bobot[-1])
+    # Menampilkan gambar beserta label asli dan prediksi
+    num_images = 10  #jumlah gambar yang ditampilin
+    indices = np.random.choice(len(X_test), num_images, replace=False)  
 
-    # graph_model = GraphModel()
-    # graph_model.create_from_layers()
-    # app = QApplication(sys.argv)
-    # gui = GUI(graph_model)
-    # sys.exit(app.exec())
+    # plt.figure(figsize=(10, 5))
+    # for i, idx in enumerate(indices):
+    #     plt.subplot(2, 5, i + 1)
+    #     plt.imshow(X_test[idx].reshape(28, 28), cmap="gray") 
+    #     plt.axis("off")
+    #     plt.title(f"True: {y_test_labels[idx]}\nPred: {pred[idx]}", fontsize=10)
+
+    # plt.tight_layout()
+    # plt.show()
+    
+    graph_model = GraphModel.create_from_layers(model.jumlah_neuron, model.bobot, model.gradients)
+    app = QApplication(sys.argv)
+    gui = GUI(graph_model)
+    gui.show()
+    sys.exit(app.exec())
+
 
 if __name__ == "__main__":
+    
     main()
-
