@@ -1,5 +1,5 @@
 import random
-from src.config.graphConfig import GraphConfig
+from config.graphConfig import GraphConfig
 import numpy as np
 class ColorHelper:
     @staticmethod

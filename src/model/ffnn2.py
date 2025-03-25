@@ -2,9 +2,9 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import concurrent.futures
-from src.utils.activationFunction import ActivationFunction
-from src.utils.lossFunction import LossFunction
-from src.utils.weightInitiation import WeightInitiation
+from utils.activationFunction import ActivationFunction
+from utils.lossFunction import LossFunction
+from utils.weightInitiation import WeightInitiation
 import time
 
 

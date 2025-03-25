@@ -3,7 +3,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel
 from PyQt6.QtCore import QTimer
-from src.model.graph.model import GraphModel
+from model.graph.model import GraphModel
 
 class SinglePlotDistribution(QWidget):
     def __init__(self, layer_data: list[tuple[int,np.ndarray]], distribution_mode: str = 'gaussian', parent=None):

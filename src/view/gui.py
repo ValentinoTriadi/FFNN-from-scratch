@@ -1,25 +1,31 @@
-
-from src.config.graphConfig import GraphConfig
-from PyQt6.QtWidgets import (QMainWindow, QHBoxLayout, QVBoxLayout, 
-                             QPushButton, QWidget, QTabWidget, QScrollArea, 
-                             QLabel, QSizePolicy)
+from config.graphConfig import GraphConfig
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QHBoxLayout,
+    QVBoxLayout,
+    QPushButton,
+    QWidget,
+    QTabWidget,
+    QScrollArea,
+    QLabel,
+    QSizePolicy,
+)
 from PyQt6.QtCore import Qt
-from src.view.graph import GraphWidget, GraphModel
+from .graph import GraphWidget, GraphModel
 from typing import List
-from src.view.distributionTabs import DistributionTabs
+from .distributionTabs import DistributionTabs
 
 
 class GUI(QMainWindow):
-    def __init__(self,graph_model : GraphModel):
+    def __init__(self, graph_model: GraphModel):
         super().__init__()
         self.setWindowTitle("Graph Visualization (Auto x-position)")
         self.setGeometry(100, 100, 1000, 800)
-        self.setStyleSheet(F"background-color: {GraphConfig.BACKGROUND_COLOR};")        
-        
+        self.setStyleSheet(f"background-color: {GraphConfig.BACKGROUND_COLOR};")
 
         # Create centrall widget, this control between the left and right side
         central_widget = QWidget()
-        
+
         self.setCentralWidget(central_widget)
         self.main_layout = QHBoxLayout(central_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -27,7 +33,7 @@ class GUI(QMainWindow):
 
         # Left Panel Initiation
         self.left_panel = QWidget()
-        
+
         self.left_layout = QVBoxLayout(self.left_panel)
         self.left_layout.setContentsMargins(0, 0, 0, 0)
         self.left_layout.setSpacing(0)
@@ -35,7 +41,6 @@ class GUI(QMainWindow):
 
         self.main_layout.addWidget(self.left_panel)
 
-        
         # self.left_layout = QVBoxLayout(self.left_panel)
         # self.main_layout.addWidget(self.left_panel)
 
@@ -45,7 +50,6 @@ class GUI(QMainWindow):
         # self.right_layout = QVBoxLayout(self.right_panel)
         # self.right_layout.setContentsMargins(10, 10, 10, 10)
         # self.right_layout.setSpacing(10)
-
 
         # self.right_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
@@ -64,11 +68,16 @@ class GUI(QMainWindow):
 
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabPosition(QTabWidget.TabPosition.North)
-        self.tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.tab_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
 
         self.tab_widget.addTab(GraphWidget(graph_model), "Graph")
-        self.tab_widget.addTab(DistributionTabs.CreateWeightDistribution(graph_model, [0,1,2,3]), "Weight Distribution")
-        
+        self.tab_widget.addTab(
+            DistributionTabs.CreateWeightDistribution(graph_model, [0, 1, 2, 3]),
+            "Weight Distribution",
+        )
+
         self.left_layout.addWidget(self.tab_widget)
 
         # self._initLeftTab(['Graph', 'Other'])
@@ -84,38 +93,37 @@ class GUI(QMainWindow):
         load_button = QPushButton("Load")
         self.right_layout.addWidget(save_button)
         self.right_layout.addWidget(load_button)
-        
+
     def _initLeftTab(self, tabs: List[str]):
         tab_widget = QTabWidget()
         tab_widget.setTabPosition(QTabWidget.TabPosition.North)
-        
+
         # Connect the currentChanged signal to a handler
         tab_widget.currentChanged.connect(self._handleTabChange)
-        
+
         for tab_name in tabs:
             scroll_area = QScrollArea()
             scroll_area.setWidgetResizable(True)
-            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            scroll_area.setHorizontalScrollBarPolicy(
+                Qt.ScrollBarPolicy.ScrollBarAsNeeded
+            )
             scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-            
+
             content_widget = QWidget()
             content_layout = QVBoxLayout(content_widget)
-            
-            
+
             label = QLabel(f"Content for {tab_name}")
             content_layout.addWidget(label)
-            
+
             scroll_area.setWidget(content_widget)
             tab_widget.addTab(scroll_area, tab_name)
-        
+
         self.left_layout.addWidget(tab_widget)
 
-    def _handleTabChange(self, index : int):
+    def _handleTabChange(self, index: int):
         self.view_stack.setCurrentIndex(index)
 
-    
-    def _initView(self, view : QWidget):
-        
+    def _initView(self, view: QWidget):
+
         # self.setCentralWidget(self.app)
         self.left_layout.addWidget(view)
-        

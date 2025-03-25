@@ -1,6 +1,5 @@
 from typing import List
-from src.model.graph.node import GraphNode
-from src.config.graphConfig import GraphConfig
+from model.graph.node import GraphNode
 import numpy as np
 
 class GraphLayer:

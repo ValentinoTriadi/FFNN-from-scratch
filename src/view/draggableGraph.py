@@ -1,13 +1,13 @@
 import pyqtgraph as pg
 import numpy as np
 from typing import List
-from src.config.graphConfig import GraphConfig
+from config.graphConfig import GraphConfig
 from PyQt6.QtWidgets import (
     QScrollArea, QGraphicsProxyWidget
 )
 from PyQt6.QtCore import QPointF
-from src.view.paginatedTable import PaginatedTableWidget
-from src.model.graph.model import GraphModel
+from view.paginatedTable import PaginatedTableWidget
+from model.graph.model import GraphModel
 
 class DraggableGraphItem(pg.GraphItem):
     def __init__(self, model : GraphModel):

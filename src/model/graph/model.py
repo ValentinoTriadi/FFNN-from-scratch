@@ -1,10 +1,10 @@
 
 from typing import List
-from src.model.graph.node import GraphNode
-from src.model.graph.layer import GraphLayer
-from src.model.graph.edge import GraphEdge
-from src.config.graphConfig import GraphConfig
-from src.utils.colorHelper import ColorHelper
+from model.graph.node import GraphNode
+from model.graph.layer import GraphLayer
+from model.graph.edge import GraphEdge
+from config.graphConfig import GraphConfig
+from utils.colorHelper import ColorHelper
 import numpy as np
 class GraphModel:
     def __init__(self):
