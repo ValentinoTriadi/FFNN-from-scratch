@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QTabWidget, QSizePolicy
-from src.view.layersDistribution import SinglePlotDistribution, MultiPlotDistribution
-from src.model.graph.model import GraphModel
+from view.layersDistribution import SinglePlotDistribution, MultiPlotDistribution
+from model.graph.model import GraphModel
 
 class DistributionTabs(QTabWidget):
     def __init__(self,  parent = None):

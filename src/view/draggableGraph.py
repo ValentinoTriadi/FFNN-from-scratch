@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 from typing import List
-from src.config.graphConfig import GraphConfig
+from config.graphConfig import GraphConfig
 from PyQt6.QtWidgets import (
     QScrollArea, QGraphicsProxyWidget, QGraphicsItem
 )

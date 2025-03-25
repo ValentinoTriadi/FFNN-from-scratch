@@ -106,6 +106,8 @@ def test_main():
     tensor_model_accuracy = tensor_model.evaluate(X_test, y_test, verbose=1)[1]
     print(f"Tensor Accuracy: {tensor_model_accuracy:.4f}")
 
+    assert np.allclose(model_accuracy, tensor_model_accuracy, atol=0.1)
+
 
 if __name__ == "__main__":
     test_main()
