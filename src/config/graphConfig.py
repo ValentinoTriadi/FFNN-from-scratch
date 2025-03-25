@@ -3,7 +3,7 @@ class GraphConfig:
     TEXT_COLOR = "#ffffff"
     BACKGROUND_COLOR = "#000000"
     NODE_SIZE = 100
-    LAYER_SPACING = 40
+    LAYER_SPACING = 10
     LAYER_Y_RANGE = (0, 120)
     LINE_SIZE = 2
     WEIGHT_TABLE_ROWS = 10

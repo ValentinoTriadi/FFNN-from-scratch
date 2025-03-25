@@ -91,7 +91,7 @@ class GraphModel:
         if isinstance(weight_neuron_data, np.ndarray):
             if weight_neuron_data.ndim == 3:
                 model.weights = [weight_neuron_data[i] for i in range(weight_neuron_data.shape[0])]
-                model.gradien_weight = [weight_grads_data[i] for i in range(weight_grads_data.shp)]
+                model.gradien_weight = [weight_grads_data[i] for i in range(weight_grads_data.shape[0])]
             else:
                 model.weights = weight_neuron_data
                 model.gradien_weight = weight_grads_data
