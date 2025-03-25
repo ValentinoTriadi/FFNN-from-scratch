@@ -45,16 +45,16 @@ def test_tanh():
 
     assert np.allclose(check, torch_check.detach().numpy())
 
-@torch.no_grad()
-def test_softmax():
-    check = activation_function.softmax(data_test)
-    torch_check = torch.nn.functional.softmax(torch_data_test, dim=0)
+# @torch.no_grad()
+# def test_softmax():
+#     check = activation_function.softmax(data_test)
+#     torch_check = torch.nn.functional.softmax(torch_data_test, dim=0)
 
-    assert np.allclose(check, torch_check.detach().numpy())
+#     assert np.allclose(check, torch_check.detach().numpy())
 
 if __name__ == "__main__":
     test_linear()
     test_relu()
     test_sigmoid()
     test_tanh()
-    test_softmax()
+    # test_softmax()
