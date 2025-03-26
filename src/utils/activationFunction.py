@@ -2,6 +2,7 @@ from typing import List
 import numpy as np
 from enum import Enum
 
+
 class ActivationFunctionMethod(Enum):
     LINEAR = "Linear"
     SIGMOID = "Sigmoid"
@@ -9,8 +10,11 @@ class ActivationFunctionMethod(Enum):
     TANH = "Tanh"
     SOFTMAX = "Softmax"
 
+
 class ActivationFunction:
-    global_fungsi_aktivasi: List[str] = [method.value for method in ActivationFunctionMethod]
+    global_fungsi_aktivasi: List[str] = [
+        method.value for method in ActivationFunctionMethod
+    ]
 
     def __init__(self, fungsi_aktivasi: list[str]):
         self.fungsi_aktivasi = fungsi_aktivasi
@@ -32,7 +36,7 @@ class ActivationFunction:
     def relu_derivative(self, x):
         return 1 * (x > 0)
 
-    def sigmoid(x):
+    def sigmoid(self, x):
         x = np.clip(x, -500, 500)
         return 1 / (1 + np.exp(-x))
 
@@ -46,15 +50,13 @@ class ActivationFunction:
         return (2 / (np.exp(x) - np.exp(-x))) ** 2
 
     def softmax(self, x):
-        epsilon = 1e-10  
-        exps = np.exp(x - np.max(x, axis=1, keepdims=True))  
+        epsilon = 1e-10
+        exps = np.exp(x - np.max(x, axis=1, keepdims=True))
         return exps / (np.sum(exps, axis=1, keepdims=True) + epsilon)
-
 
     def softmax_derivative(self, x):
         s = self.softmax(x)
         return s * (1 - s)  # Hanya elemen diagonal
-
 
     def get_activation_function(self, fungsi_aktivasi: ActivationFunctionMethod):
         match fungsi_aktivasi:
