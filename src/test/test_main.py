@@ -4,19 +4,15 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import accuracy_score
-import matplotlib.pyplot as plt
 import time
-from sklearn.neural_network import MLPClassifier
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
-from src.model.ffnn2 import FFNN2
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+from model.ffnn2 import FFNN2
 
 
 MODEL_FILENAME = "ffnn_model.pkl"
