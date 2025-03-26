@@ -51,7 +51,7 @@ class LossFunction:
             raise ValueError("Panjang input dengan target tidak sama")
 
         epsilon = 1e-15
-        y_pred = np.clip(y_pred, epsilon, 1 - epsilon)  # ✅ Hindari log(0)
+        y_pred = np.clip(y_pred, epsilon, 1 - epsilon) 
 
         return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
 

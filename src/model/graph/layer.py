@@ -3,10 +3,18 @@ from model.graph.node import GraphNode
 import numpy as np
 
 class GraphLayer:
+    """
+    GraphLayer is a model that represent the layer in FFNN. it can be an Input Layer, Hidden Layer, and even Output Layer
+    Parameter: 
+    - index : The layer index (start from 0)
+    - neuron_num : The amount of neuron or node need to be created
+    - text_pre_header : The Header of each node name (E.g: Input, Hidden, Output)
+    - x_position : Position of the layer relative to graph view
+    - y_range : This is the difference in vertical range between each node
+    """
     bias_idx = 1
     def __init__(self, index : int, neuron_num: int, text_pre_header: str, x_position: float,
                  node_color: str, edge_color: str, y_range: tuple = (0, 10)):
-        
         self.index = index
         self.text_pre_header = text_pre_header
         self.x_position = x_position
@@ -24,11 +32,13 @@ class GraphLayer:
             pos = (self.x_position, y_pos[i])
             title = self.text_pre_header
             idx = i 
+            
+            # Handle Bias
             if(self.text_pre_header != "Output" and i == 0):
                 title = "Bias"
                 idx = GraphLayer.bias_idx
                 GraphLayer.bias_idx += 1
                 
-            node = GraphNode(f"{title}-{idx}", pos, self.node_color)
+            node = GraphNode(f"{title}{self.index}-{idx+1}", pos, self.node_color)
             self.nodes.append(node)
     

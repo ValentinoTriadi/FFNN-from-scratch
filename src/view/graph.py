@@ -2,12 +2,18 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 import pyqtgraph as pg
 import numpy as np
 from model.graph.model import GraphModel
-from view.draggableGraph import DraggableGraphItem
+from view.draggableGraph import GraphPG
 from config.graphConfig import GraphConfig
 from utils.colorHelper import ColorHelper
 
 
 class GraphWidget(QWidget):
+    """
+    GraphWidget are the widget stroing GraphPG graphical items. In this class, all the required data like node and edge position, texts, colors that will be used in GraphPG are initialized 
+    Parameter:
+    - graph_model : All the neural network Data
+    - parent: The widget parent
+    """
     def __init__(self, graph_model: GraphModel, parent=None):
         super().__init__(parent)
         self.graph_model = graph_model
@@ -27,7 +33,7 @@ class GraphWidget(QWidget):
         viewbox = pg.ViewBox(lockAspect=True)
         self.graphics_layout.addItem(viewbox)
 
-        self.graph_item = DraggableGraphItem(self.graph_model)
+        self.graph_item = GraphPG(self.graph_model)
 
         viewbox.addItem(self.graph_item)
 
