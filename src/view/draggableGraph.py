@@ -3,11 +3,12 @@ import numpy as np
 from typing import List
 from config.graphConfig import GraphConfig
 from PyQt6.QtWidgets import (
-    QScrollArea, QGraphicsProxyWidget
+    QScrollArea, QGraphicsProxyWidget, QGraphicsItem
 )
 from PyQt6.QtCore import QPointF
 from view.paginatedTable import PaginatedTableWidget
 from model.graph.model import GraphModel
+from scipy.spatial import cKDTree
 
 class DraggableGraphItem(pg.GraphItem):
     def __init__(self, model : GraphModel):
@@ -22,7 +23,7 @@ class DraggableGraphItem(pg.GraphItem):
         self.graphModel = model
         self.textItems: List[str] = []
         self.setAcceptHoverEvents(True)
-        self.maxEdgeDistance = 30
+        self.maxEdgeDistance = 15
         self._clickPos = None  # to record the initial click position
 
         # Create scroll area and the paginated table just once.
@@ -48,6 +49,7 @@ class DraggableGraphItem(pg.GraphItem):
 
     def setGraphData(self, pos: np.ndarray, adj: np.ndarray, pen, size: float, symbol: str, symbolBrush):
         self._pos = pos
+        self.kd_tree = cKDTree(pos)
         self._adj = adj
         self._pen = pen
         self._size = size
@@ -88,6 +90,7 @@ class DraggableGraphItem(pg.GraphItem):
                 textItem.setPos(pos[i, 0], pos[i, 1])
                 textItem.setAnchor((0.5, 0.5))
                 textItem.setZValue(100)
+                
                 self.textItems.append(textItem)
                 textItem.setHtml(
                     f'<span style="color{GraphConfig.TEXT_COLOR}; font-size:{GraphConfig.TEXT_SIZE}px;">'
@@ -95,24 +98,33 @@ class DraggableGraphItem(pg.GraphItem):
                 )
 
     def updateTextItems(self, textItems):
+        viewbox = self._viewBox()
+        visible_rect = viewbox.mapToScene(viewbox.viewport().rect()).boundingRect()
+        
         if textItems:
             for i, textItem in enumerate(textItems):
-                textItem.setPos(self._pos[i, 0], self._pos[i, 1])
-                textItem.setAnchor((0.5, 0.5))
-                textItem.setHtml(
-                    f'<span style="color{GraphConfig.TEXT_COLOR}; font-size:{GraphConfig.TEXT_SIZE}px;">'
-                    f'{textItem.textItem.toPlainText()}</span>'
-                )
+                node_pos = self._pos[i]
+                node_point = QPointF(node_pos[0], node_pos[1])
+                if visible_rect.contains(node_point):
+                    textItem.setVisible(True)
+                    textItem.setPos(node_pos[0], node_pos[1])
+                    textItem.setAnchor((0.5, 0.5))
+                    textItem.setHtml(
+                        f'<span style="color{GraphConfig.TEXT_COLOR}; font-size:{GraphConfig.TEXT_SIZE}px;">'
+                        f'{textItem.textItem.toPlainText()}</span>'
+                    )
+                else:
+                    textItem.setVisible(False)
 
     def mousePressEvent(self, ev):
         viewbox = self._viewBox()
         pos_view = viewbox.mapSceneToView(ev.scenePos())
         if self._pos is not None:
-            distances = np.linalg.norm(self._pos - np.array([pos_view.x(), pos_view.y()]), axis=1)
-            node_index = np.argmin(distances)
-            if distances[node_index] < 1:  # if click is close enough to a node
+            # Query the KD-tree for the nearest node
+            dist, node_index = self.kd_tree.query([pos_view.x(), pos_view.y()])
+            if dist < 1:  # if click is close enough to a node
                 self.draggedNode = node_index
-                self._clickPos = pos_view  # store initial view coordinate
+                self._clickPos = pos_view
                 ev.accept()
                 return
         ev.ignore()
@@ -124,9 +136,8 @@ class DraggableGraphItem(pg.GraphItem):
         viewbox = self._viewBox()
         pos_view = viewbox.mapSceneToView(ev.scenePos())
         if self._pos is not None:
-            distances = np.linalg.norm(self._pos - np.array([pos_view.x(), pos_view.y()]), axis=1)
-            node_index = np.argmin(distances)
-            if distances[node_index] < 1:  # within hit radius
+            distances, node_index = self.kd_tree.query([pos_view.x(), pos_view.y()])
+            if distances < 2:  # within hit radius
                 self.showScrollablePanel(node_index)
                 ev.accept()
                 return

@@ -26,8 +26,8 @@ class DistributionTabs(QTabWidget):
         dist.addTab(SinglePlotDistribution.GradientWeightDistribution(graph_model, layer_selected, 'histogram'), "Histogram (Combined)")
         dist.addTab(SinglePlotDistribution.GradientWeightDistribution(graph_model, layer_selected, 'gaussian'), "Gaussian (Combined)")
         dist.addTab(SinglePlotDistribution.GradientWeightDistribution(graph_model, layer_selected, 'scatter'), "Scatter (Combined)")
-        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model,layer_selected, "histogram", "Histogram (Single)"))
-        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"gaussian", "Gaussian (Single)"))
-        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"scatter", "Scatter (Single)"))
+        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model,layer_selected, "histogram"),"Histogram (Single)")
+        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"gaussian"), "Gaussian (Single)")
+        dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"scatter"), "Scatter (Single)")
 
         return dist

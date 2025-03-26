@@ -59,13 +59,13 @@ class SinglePlotDistribution(QWidget):
                 x=bin_centers, height=hist, width=bar_width, brush=color, pen=pg.mkPen(None), y0=offset
             )
             self.plotWidget.addItem(bg)
-            # Dummy item for legend.
+            
             dummy = pg.PlotDataItem(name=f"Layer {layer_idx}")
             self.plotWidget.addItem(dummy)
             dummy.hide()
         self.plotWidget.setLabel('bottom', 'Weight Value', color='k')
         self.plotWidget.setLabel('left', 'Frequency + Offset', color='k')
-        # self.plotWidget.enableAutoRange()
+        
     
     def createScatterDistribution(self, bin_count=50):
         for i, (layer_idx, data) in enumerate(self.layer_data):

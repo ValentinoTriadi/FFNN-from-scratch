@@ -17,7 +17,7 @@ from .distributionTabs import DistributionTabs
 
 
 class GUI(QMainWindow):
-    def __init__(self, graph_model: GraphModel):
+    def __init__(self, graph_model: GraphModel, selected_distribution_layer : list[int]):
         super().__init__()
         self.setWindowTitle("Graph Visualization (Auto x-position)")
         self.setGeometry(100, 100, 1000, 800)
@@ -72,11 +72,12 @@ class GUI(QMainWindow):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
-        self.tab_widget.addTab(GraphWidget(graph_model), "Graph")
+        self.tab_widget.addTab(GraphWidget(graph_model), "Graph Structure")
         self.tab_widget.addTab(
-            DistributionTabs.CreateWeightDistribution(graph_model, [0, 1, 2, 3]),
+            DistributionTabs.CreateWeightDistribution(graph_model, selected_distribution_layer),
             "Weight Distribution",
         )
+        self.tab_widget.addTab(DistributionTabs.CreateGradientWeightDistribution(graph_model, selected_distribution_layer), "Gradient Weight Distribution")
 
         self.left_layout.addWidget(self.tab_widget)
 
