@@ -3,6 +3,9 @@ from view.layersDistribution import SinglePlotDistribution, MultiPlotDistributio
 from model.graph.model import GraphModel
 
 class DistributionTabs(QTabWidget):
+    """
+    DistributionTabs are Tab widget that store either Weight Distribution Tabs or Gradient Weight Distribution Tabs
+    """
     def __init__(self,  parent = None):
         super().__init__(parent)
         self.setTabPosition(QTabWidget.TabPosition.West)

@@ -10,7 +10,12 @@ from view.paginatedTable import PaginatedTableWidget
 from model.graph.model import GraphModel
 from scipy.spatial import cKDTree
 
-class DraggableGraphItem(pg.GraphItem):
+class GraphPG(pg.GraphItem):
+    """
+    GraphPG are the graphics item that paint all the node, edge, and text in the viewport.
+    Parameter : 
+    - model : All the neural netweork data
+    """
     def __init__(self, model : GraphModel):
         super().__init__()
         self.draggedNode = None
@@ -25,19 +30,17 @@ class DraggableGraphItem(pg.GraphItem):
         self.setAcceptHoverEvents(True)
         self.maxEdgeDistance = 15
         self._clickPos = None  # to record the initial click position
-
-        # Create scroll area and the paginated table just once.
+        
+        # Create Table (Using pooling system for faster update)        
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(True)        
-        
 
-        # Create the table widget with no initial data.
         self.paginatedTable = PaginatedTableWidget(data=[], rows_per_page=GraphConfig.WEIGHT_TABLE_ROWS)
         self.paginatedTable.closeRequested.connect(self.hidePopup)
-        # Add the table widget to the scroll area.
+        
         self.scrollArea.setWidget(self.paginatedTable)
 
-        # Prepare the popup proxy; hide initially.
+        # Prepare the popup proxy; hide initially. Used for popup shown when double clicking a node
         self.popupProxy = QGraphicsProxyWidget()
         self.popupProxy.setWidget(self.scrollArea)
         self.popupProxy.hide()

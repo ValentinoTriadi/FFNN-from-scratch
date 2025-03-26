@@ -15,10 +15,10 @@ class PaginatedTableWidget(QWidget):
         self.total_pages = max(1, (len(self.data) + rows_per_page - 1) // rows_per_page)
         self.node_name = ""
         
-        self.initUI()
+        self._initUI()
 
 
-    def initUI(self):
+    def _initUI(self):
         
         layout = QVBoxLayout(self)
 
@@ -84,30 +84,30 @@ class PaginatedTableWidget(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
 
+        # Pagination Control
         self.paginationLayout = QHBoxLayout()
         self.prevButton = QPushButton("Previous")
-        self.prevButton.clicked.connect(self.goToPreviousPage)
+        self.prevButton.clicked.connect(self._goToPreviousPage)
         self.nextButton = QPushButton("Next")
-        self.nextButton.clicked.connect(self.goToNextPage)
+        self.nextButton.clicked.connect(self._goToNextPage)
         self.pageLabel = QLabel(f"Page {self.current_page} of {self.total_pages}")
         self.pageEdit = QLineEdit()
         self.pageEdit.setFixedWidth(40)
         self.pageEdit.setPlaceholderText("Page")
-        self.pageEdit.returnPressed.connect(self.goToPage)
+        self.pageEdit.returnPressed.connect(self._goToPage)
         self.paginationLayout.addWidget(self.prevButton)
         self.paginationLayout.addWidget(self.nextButton)
         self.paginationLayout.addWidget(self.pageLabel)
         self.paginationLayout.addWidget(self.pageEdit)
         layout.addLayout(self.paginationLayout)
 
-        self.loadPage(self.current_page)
+        self._loadPage(self.current_page)
 
     def updateTitle(self):
         self.titleWidgets.setText(self.node_name)
-        # doc_height = self.titleWidgets.document().size().height()
         self.titleWidgets.setFixedHeight(40)
         
-    def loadPage(self, page):
+    def _loadPage(self, page):
         self.current_page = page
         start_index = (page - 1) * self.rows_per_page
         end_index = start_index + self.rows_per_page
@@ -126,19 +126,19 @@ class PaginatedTableWidget(QWidget):
             self.table.setItem(row, 2, weight_value)
         self.pageLabel.setText(f"Page {self.current_page} of {self.total_pages}")
 
-    def goToPreviousPage(self):
+    def _goToPreviousPage(self):
         if self.current_page > 1:
-            self.loadPage(self.current_page - 1)
+            self._loadPage(self.current_page - 1)
 
-    def goToNextPage(self):
+    def _goToNextPage(self):
         if self.current_page < self.total_pages:
-            self.loadPage(self.current_page + 1)
+            self._loadPage(self.current_page + 1)
 
-    def goToPage(self):
+    def _goToPage(self):
         try:
             page = int(self.pageEdit.text())
             if 1 <= page <= self.total_pages:
-                self.loadPage(page)
+                self._loadPage(page)
         except ValueError:
             pass
 
@@ -150,7 +150,7 @@ class PaginatedTableWidget(QWidget):
         self.color = color
         self.current_page = 1
         self.total_pages = max(1, (len(self.data) + self.rows_per_page - 1) // self.rows_per_page)
-        self.loadPage(self.current_page)
+        self._loadPage(self.current_page)
         self.table.setStyleSheet(f"""
             QHeaderView::section {{
                 background-color: {self.color};

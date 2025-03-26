@@ -7,8 +7,10 @@ from config.graphConfig import GraphConfig
 from utils.colorHelper import ColorHelper
 import numpy as np
 class GraphModel:
+    """
+    GraphModel is the main model which are the connector between the ML model and the views.
+    """
     def __init__(self):
-        self.head = None
         self.nodes : List[GraphNode] = []
         self.edges : List[GraphEdge]= []
         self.layers : List[GraphLayer] = []
@@ -21,13 +23,6 @@ class GraphModel:
             self._add_node(node)
 
     def _add_node(self, node : GraphNode):
-        if self.head is None:
-            self.head = node
-        else:
-            current = self.head
-            while current.next:
-                current = current.next
-            current.next = node
         self.nodes.append(node)
     
     def _create_fully_connected_edges(self):
@@ -54,7 +49,6 @@ class GraphModel:
                     edge_label = f"W[{from_label}][{to_label}]"
                     edge = GraphEdge(node_from, node_to, current_layer.edge_color, self.weights[layer_index][i][j],self.gradien_weight[layer_index][i][j],edge_label)
                     self.edges.append(edge)
-                    node_from.adjacent.append(node_to)
 
     def getAllEdgesFromNode(self, node) -> list[GraphEdge]:
         return [edge for edge in self.edges if edge.input_node == node]
@@ -64,6 +58,13 @@ class GraphModel:
    
     @classmethod
     def create_from_layers(cls, neuron_list : list[int], weight_neuron_data : list[list[list[str]]], weight_grads_data : list[list[list[str]]]) -> 'GraphModel':
+        """
+        Create new GraphModel from list of neurons
+        Parameter: 
+        - neuron_list : List of integer that specify the amount of neuron each layers have
+        - weight_neuron_data : List of NpArray that save the weight of each edge
+        - weight_grads_data : List of NpArray that save the gradient weight of each edge
+        """
         model = cls()
         x_spacing = GraphConfig.LAYER_SPACING
         y_range = GraphConfig.LAYER_Y_RANGE
@@ -88,6 +89,7 @@ class GraphModel:
             model._add_layer(layer)
         
         
+        # Save the weight and gradient weight for easier access
         if isinstance(weight_neuron_data, np.ndarray):
             if weight_neuron_data.ndim == 3:
                 model.weights = [weight_neuron_data[i] for i in range(weight_neuron_data.shape[0])]
