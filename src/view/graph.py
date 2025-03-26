@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 import pyqtgraph as pg
 import numpy as np
 from model.graph.model import GraphModel
-from view.draggableGraph import GraphPG
+from view.graphPG import GraphPG
 from config.graphConfig import GraphConfig
 from utils.colorHelper import ColorHelper
 

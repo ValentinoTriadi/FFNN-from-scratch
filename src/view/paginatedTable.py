@@ -5,7 +5,7 @@ class PaginatedTableWidget(QWidget):
     closeRequested = pyqtSignal()
     def __init__(self, data, rows_per_page=10):
         """
-        data: list of tuples, each tuple should be (weight label, weight value)
+        data: list of tuples, each tuple should be (weight label, weight value, gradient_value)
         rows_per_page: number of rows to show per page
         """
         super().__init__()

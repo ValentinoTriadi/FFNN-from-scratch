@@ -38,7 +38,9 @@ class GraphLayer:
                 title = "Bias"
                 idx = GraphLayer.bias_idx
                 GraphLayer.bias_idx += 1
-                
-            node = GraphNode(f"{title}{self.index}-{idx+1}", pos, self.node_color)
+            layer_idx = self.index
+            if(self.text_pre_header == "Output" or self.text_pre_header == "Input"):
+                layer_idx = ""
+            node = GraphNode(f"{title}{layer_idx}-{idx+1}", pos, self.node_color)
             self.nodes.append(node)
     

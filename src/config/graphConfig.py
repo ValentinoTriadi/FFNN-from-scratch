@@ -1,14 +1,18 @@
 class GraphConfig:
+
+    # Performance
     TEXT_SIZE = 12
+    NODE_SIZE = 50
+    LAYER_SPACING = 50
+    MAX_EDGE_DISTANCE = 55
+    LAYER_Y_RANGE = (0, 120)
+    LINE_SIZE = 1
+
+    # Style
     TEXT_COLOR = "#ffffff"
     BACKGROUND_COLOR = "#000000"
-    NODE_SIZE = 100
-    LAYER_SPACING = 5
-    LAYER_Y_RANGE = (0, 120)
-    LINE_SIZE = 2
     WEIGHT_TABLE_ROWS = 10
     MARGIN_RIGHT = 200
-
     class Colors:
         class Light:
             red = "#ff4d4d"
