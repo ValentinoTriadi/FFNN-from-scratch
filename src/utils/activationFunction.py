@@ -32,7 +32,8 @@ class ActivationFunction:
     def relu_derivative(self, x):
         return 1 * (x > 0)
 
-    def sigmoid(self, x):
+    def sigmoid(x):
+        x = np.clip(x, -500, 500)
         return 1 / (1 + np.exp(-x))
 
     def sigmoid_derivative(self, x):
