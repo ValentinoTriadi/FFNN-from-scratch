@@ -18,7 +18,6 @@ class GraphPG(pg.GraphItem):
     """
     def __init__(self, model : GraphModel):
         super().__init__()
-        self.draggedNode = None
         self._pos = None
         self._adj = None
         self._pen = None
@@ -28,7 +27,7 @@ class GraphPG(pg.GraphItem):
         self.graphModel = model
         self.textItems: List[str] = []
         self.setAcceptHoverEvents(True)
-        self.maxEdgeDistance = 15
+        
         self._clickPos = None  # to record the initial click position
         
         # Create Table (Using pooling system for faster update)        
@@ -44,8 +43,6 @@ class GraphPG(pg.GraphItem):
         self.popupProxy = QGraphicsProxyWidget()
         self.popupProxy.setWidget(self.scrollArea)
         self.popupProxy.hide()
-
-        self.popupNodeIndex = None
 
     def hidePopup(self):
         self.popupProxy.hide()
@@ -65,7 +62,7 @@ class GraphPG(pg.GraphItem):
             i, j = edge
             p1, p2 = pos[i], pos[j]
             dist = np.hypot(p1[0] - p2[0], p1[1] - p2[1])
-            if dist < self.maxEdgeDistance:
+            if dist < GraphConfig.MAX_EDGE_DISTANCE:
                 filtered_adj.append(edge)
                 filtered_indices.append(idx)
 
@@ -119,18 +116,6 @@ class GraphPG(pg.GraphItem):
                 else:
                     textItem.setVisible(False)
 
-    def mousePressEvent(self, ev):
-        viewbox = self._viewBox()
-        pos_view = viewbox.mapSceneToView(ev.scenePos())
-        if self._pos is not None:
-            # Query the KD-tree for the nearest node
-            dist, node_index = self.kd_tree.query([pos_view.x(), pos_view.y()])
-            if dist < 1:  # if click is close enough to a node
-                self.draggedNode = node_index
-                self._clickPos = pos_view
-                ev.accept()
-                return
-        ev.ignore()
 
     def mouseDoubleClickEvent(self, ev):
         """
@@ -146,10 +131,6 @@ class GraphPG(pg.GraphItem):
                 return
         ev.ignore()
 
-    def mouseReleaseEvent(self, ev):
-        self.draggedNode = None
-        self._clickPos = None
-        ev.accept()
 
     def showScrollablePanel(self,node_index: int):
         """
@@ -157,7 +138,6 @@ class GraphPG(pg.GraphItem):
         then positions the popup near that node.
         """
         print("Double click event received for node:", node_index)
-        self.popupNodeIndex = node_index
 
         new_data = []
         selected_node = self.graphModel.getNode(node_index)

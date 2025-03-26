@@ -1,23 +1,25 @@
 import math
 import numpy as np
 import pyqtgraph as pg
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea
 from PyQt6.QtCore import QTimer
 from model.graph.model import GraphModel
 
 class SinglePlotDistribution(QWidget):
-    def __init__(self, layer_data: list[tuple[int,np.ndarray]], distribution_mode: str = 'gaussian', parent=None):
+    def __init__(self, layer_data: list[tuple[int,np.ndarray]], distribution_mode: str = 'gaussian', x_label = "Weight Value", parent = None):
         """
         Plot layers data into chart or plot. we at least gave 3 plot which is scatter, histogram, and Gaussian Curve
         Parameters:
           - layer_data: List of tuples (layer_index, data) where layer data are saved
           - distribution_mode: 'histogram', 'scatter', or 'gaussian'
+          - x_label : Label on the bottom of the Graph
         """
         super().__init__(parent)
         self.setWindowTitle("Single Plot Distribution")
         self.layer_data = layer_data
         self.distribution_mode = distribution_mode.lower()
-        
+        self.x_label = x_label
+
         layout = QVBoxLayout(self)
         self.plotWidget = pg.PlotWidget(title="Combined Distribution")
         layout.addWidget(self.plotWidget)
@@ -63,7 +65,7 @@ class SinglePlotDistribution(QWidget):
             dummy = pg.PlotDataItem(name=f"Layer {layer_idx}")
             self.plotWidget.addItem(dummy)
             dummy.hide()
-        self.plotWidget.setLabel('bottom', 'Weight Value', color='k')
+        self.plotWidget.setLabel('bottom', self.x_label, color='k')
         self.plotWidget.setLabel('left', 'Frequency + Offset', color='k')
         
     
@@ -77,7 +79,7 @@ class SinglePlotDistribution(QWidget):
                 pen=None, brush=color, size=8, name=f"Layer {layer_idx}"
             )
             self.plotWidget.addItem(scatter)
-        self.plotWidget.setLabel('bottom', 'Weight Value', color='k')
+        self.plotWidget.setLabel('bottom', self.x_label, color='k')
         self.plotWidget.setLabel('left', 'Frequency', color='k')
     
     def createGaussianCurveDistribution(self):
@@ -103,7 +105,7 @@ class SinglePlotDistribution(QWidget):
             fill = pg.FillBetweenItem(curve, baseline, brush=color)
             self.plotWidget.addItem(fill)
 
-        self.plotWidget.setLabel('bottom', 'Weight Value', color='k')
+        self.plotWidget.setLabel('bottom', self.x_label, color='k')
         self.plotWidget.setLabel('left', 'Probability Density', color='k')
         
 
@@ -116,7 +118,7 @@ class SinglePlotDistribution(QWidget):
                 data = graph_model.weights[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, parent)
+        layer_dist = cls(layers_data, distribution_mode, "Weight Value", parent)
         return layer_dist
     
     @classmethod
@@ -128,12 +130,12 @@ class SinglePlotDistribution(QWidget):
                 data = graph_model.gradien_weight[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, parent)
+        layer_dist = cls(layers_data, distribution_mode, "Gradient Weight Value", parent)
         return layer_dist
 
 
 class MultiPlotDistribution(QWidget):
-    def __init__(self, layer_data: list[tuple[int, np.ndarray]], distribution_mode: str = 'gaussian', parent=None):
+    def __init__(self, layer_data: list[tuple[int, np.ndarray]], distribution_mode: str = 'gaussian', parent=None, x_label = "Weight Label"):
         """
         This class is just combining Multiple SinglePlotDistribution that each layer get it's own Graph
         Parameters:
@@ -154,8 +156,8 @@ class MultiPlotDistribution(QWidget):
         
         
         for layer_idx, data in layer_data:
-            
-            widget = SinglePlotDistribution(layer_data=[(layer_idx, data)], distribution_mode=self.distribution_mode)
+            weight_label = f"Layer {layer_idx} {x_label}"
+            widget = SinglePlotDistribution(layer_data=[(layer_idx, data)], distribution_mode=self.distribution_mode, x_label=weight_label)
             self.containerLayout.addWidget(widget)
 
     @classmethod
@@ -167,7 +169,7 @@ class MultiPlotDistribution(QWidget):
                 data = graph_model.weights[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, parent)
+        layer_dist = cls(layers_data, distribution_mode,"Weight Value", parent)
         return layer_dist
     @classmethod
     def GradientWeightDistribution(cls, graph_model : GraphModel, layer_index_list : list[int],distribution_mode : str = 'gaussian', parent = None):
@@ -178,5 +180,5 @@ class MultiPlotDistribution(QWidget):
                 data = graph_model.gradien_weight[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, parent)
+        layer_dist = cls(layers_data, distribution_mode, "Gradient Weight Value", parent)
         return layer_dist
