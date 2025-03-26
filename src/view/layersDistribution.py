@@ -8,6 +8,7 @@ from model.graph.model import GraphModel
 class SinglePlotDistribution(QWidget):
     def __init__(self, layer_data: list[tuple[int,np.ndarray]], distribution_mode: str = 'gaussian', parent=None):
         """
+        Plot layers data into chart or plot. we at least gave 3 plot which is scatter, histogram, and Gaussian Curve
         Parameters:
           layer_data: List of tuples (layer_index, data) where data is a numpy array.
           distribution_mode: 'histogram', 'scatter', or 'gaussian' (default)
@@ -26,7 +27,6 @@ class SinglePlotDistribution(QWidget):
         self.legend = self.plotWidget.addLegend(offset=(10, 10))
         self.legend.anchor((1, 0), (1, 0))
         
-        # (Optional) Timer to refresh plot if data is dynamic.
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.updatePlot)
         self.timer.start(1000)
@@ -129,10 +129,12 @@ class SinglePlotDistribution(QWidget):
 
         layer_dist = cls(layers_data, distribution_mode, parent)
         return layer_dist
-    
+
+
 class MultiPlotDistribution(QWidget):
     def __init__(self, layer_data: list[tuple[int, np.ndarray]], distribution_mode: str = 'gaussian', parent=None):
         """
+        This class is just combining Multiple SinglePlotDistribution that each layer get it's own Graph
         Parameters:
           layer_data: List of tuples (layer_index, data)
           distribution_mode: Distribution mode for each plot ('gaussian', 'histogram', or 'scatter')
@@ -149,9 +151,9 @@ class MultiPlotDistribution(QWidget):
         self.containerLayout = QVBoxLayout(container)
         self.scrollArea.setWidget(container)
         
-        # Create a SinglePlotDistribution for each layer individually.
+        
         for layer_idx, data in layer_data:
-            # For each layer, we wrap it in a SinglePlotDistribution widget with one data entry.
+            
             widget = SinglePlotDistribution(layer_data=[(layer_idx, data)], distribution_mode=self.distribution_mode)
             self.containerLayout.addWidget(widget)
 
