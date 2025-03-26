@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import (
     QScrollArea, QGraphicsProxyWidget, QGraphicsItem
 )
 from PyQt6.QtCore import QPointF
-from src.view.paginatedTable import PaginatedTableWidget
-from src.model.graph.model import GraphModel
+from view.paginatedTable import PaginatedTableWidget
+from model.graph.model import GraphModel
 from scipy.spatial import cKDTree
 
 class DraggableGraphItem(pg.GraphItem):
