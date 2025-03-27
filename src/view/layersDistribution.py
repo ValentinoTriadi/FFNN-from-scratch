@@ -118,7 +118,7 @@ class SinglePlotDistribution(QWidget):
                 data = graph_model.weights[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, "Weight Value", parent)
+        layer_dist = cls(layers_data, distribution_mode,"Weight Value",parent)
         return layer_dist
     
     @classmethod
@@ -130,12 +130,12 @@ class SinglePlotDistribution(QWidget):
                 data = graph_model.gradien_weight[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, "Gradient Weight Value", parent)
+        layer_dist = cls(layers_data, distribution_mode,  "Gradient Weight Value",parent)
         return layer_dist
 
 
 class MultiPlotDistribution(QWidget):
-    def __init__(self, layer_data: list[tuple[int, np.ndarray]], distribution_mode: str = 'gaussian', parent=None, x_label = "Weight Label"):
+    def __init__(self, layer_data: list[tuple[int, np.ndarray]], distribution_mode: str = 'gaussian',parent=None, x_label = "Weight Label"):
         """
         This class is just combining Multiple SinglePlotDistribution that each layer get it's own Graph
         Parameters:
@@ -157,7 +157,7 @@ class MultiPlotDistribution(QWidget):
         
         for layer_idx, data in layer_data:
             weight_label = f"Layer {layer_idx} {x_label}"
-            widget = SinglePlotDistribution(layer_data=[(layer_idx, data)], distribution_mode=self.distribution_mode, x_label=weight_label)
+            widget = SinglePlotDistribution(layer_data=[(layer_idx, data)], distribution_mode=self.distribution_mode, x_label=weight_label, parent=None)
             self.containerLayout.addWidget(widget)
 
     @classmethod
@@ -169,7 +169,7 @@ class MultiPlotDistribution(QWidget):
                 data = graph_model.weights[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode,"Weight Value", parent)
+        layer_dist = cls(layers_data, distribution_mode,parent,"Weight Value")
         return layer_dist
     @classmethod
     def GradientWeightDistribution(cls, graph_model : GraphModel, layer_index_list : list[int],distribution_mode : str = 'gaussian', parent = None):
@@ -180,5 +180,5 @@ class MultiPlotDistribution(QWidget):
                 data = graph_model.gradien_weight[idx]
                 layers_data.append((idx,data))
 
-        layer_dist = cls(layers_data, distribution_mode, "Gradient Weight Value", parent)
+        layer_dist = cls(layers_data, distribution_mode, parent,"Gradient Weight Value")
         return layer_dist
