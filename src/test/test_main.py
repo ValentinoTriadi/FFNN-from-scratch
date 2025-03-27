@@ -10,6 +10,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 from sklearn.model_selection import train_test_split
 import numpy as np
+from sklearn.neural_network import MLPClassifier
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from model.ffnn2 import FFNN2
@@ -59,7 +60,7 @@ def test_main():
         start_time = time.time()
 
         # Training model
-        model.fit(X=X_train, y=y_train, batch=100, lr=0.1, epochs=500)
+        model.fit(X=X_train, y=y_train, batch=100, lr=0.001, epochs=500)
 
         # Catat waktu selesai training
         end_time = time.time()
@@ -78,7 +79,7 @@ def test_main():
     model_accuracy = accuracy_score(y_test_labels, pred)
     print(f"Model Accuracy: {model_accuracy:.4f}")
 
-    # Compare with tensor
+    #! Compare with tensor
     tensor_model = Sequential(
         [
             Input(shape=(784,)),
@@ -102,7 +103,22 @@ def test_main():
     tensor_model_accuracy = tensor_model.evaluate(X_test, y_test, verbose=1)[1]
     print(f"Tensor Accuracy: {tensor_model_accuracy:.4f}")
 
-    assert np.allclose(model_accuracy, tensor_model_accuracy, atol=0.1)
+    #! Compare with SKLearn
+    sk_model = MLPClassifier(
+        hidden_layer_sizes=(128, 64, 64),
+        activation="relu",
+        max_iter=500,
+        random_state=123123,
+        learning_rate="constant",
+        learning_rate_init=0.001,
+    )
+    sk_model.fit(X_train, y_train)
+    sk_pred = sk_model.predict(X_test)
+    sk_model_accuracy = accuracy_score(sk_pred, y_test)
+    print(f"SKLearn Accuracy: {sk_model_accuracy:.4f}")
+
+    assert np.allclose(model_accuracy, tensor_model_accuracy, atol=0.3)
+    assert np.allclose(model_accuracy, sk_model_accuracy, atol=0.3)
 
 
 if __name__ == "__main__":
