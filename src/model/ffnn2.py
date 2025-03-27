@@ -62,15 +62,27 @@ class FFNN2:
             self.fungsi_aktivasi_str
         ).get_activation_derivative(self.fungsi_aktivasi_str[-1])
 
-        deltas[-1] = loss_derivative(hasil[-1], y) * activation_derivative(hasil[-1])
+        if self.fungsi_aktivasi_str[-1] == "Softmax":
+            loss_grad = loss_derivative(hasil[-1], y)
+            deltas[-1] = activation_derivative(hasil[-1], loss_grad)
+        else:
+            deltas[-1] = loss_derivative(hasil[-1], y) * activation_derivative(
+                hasil[-1]
+            )
 
         for i in range(self.jumlah_layer - 2, -1, -1):
             activation_derivative_i = ActivationFunction(
                 self.fungsi_aktivasi_str
             ).get_activation_derivative(self.fungsi_aktivasi_str[i])
-            deltas[i] = (
-                deltas[i + 1] @ self.bobot[i + 1][1:].T
-            ) * activation_derivative_i(hasil[i + 1])
+
+            upstream_gradient = deltas[i + 1] @ self.bobot[i + 1][1:].T  
+
+            if self.fungsi_aktivasi_str[i] == "Softmax":
+                # Compute delta = (upstream_gradient) @ Jacobian
+                deltas[i] = activation_derivative_i(hasil[i + 1], grad_loss=upstream_gradient)
+            else:
+                deltas[i] = upstream_gradient * activation_derivative_i(hasil[i + 1])
+
 
         gradients = []
         for i in range(self.jumlah_layer):

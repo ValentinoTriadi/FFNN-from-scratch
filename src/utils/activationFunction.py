@@ -54,9 +54,21 @@ class ActivationFunction:
         exps = np.exp(x - np.max(x, axis=1, keepdims=True))
         return exps / (np.sum(exps, axis=1, keepdims=True) + epsilon)
 
-    def softmax_derivative(self, x):
+    def softmax_derivative(self, x, grad_loss=None):
         s = self.softmax(x)
-        return s * (1 - s)  # Hanya elemen diagonal
+
+        if len(x.shape) == 1:
+            jacobian = np.diag(s) - np.outer(s, s)
+        else:
+            batch_size, n = x.shape
+            jacobian = np.zeros((batch_size, n, n))
+            for i in range(batch_size):
+                jacobian[i] = np.diag(s[i]) - np.outer(s[i], s[i])
+
+        if grad_loss is not None:
+            return np.einsum("bi,bij->bj", grad_loss, jacobian)
+        else:
+            return jacobian
 
     def get_activation_function(self, fungsi_aktivasi: ActivationFunctionMethod):
         match fungsi_aktivasi:
