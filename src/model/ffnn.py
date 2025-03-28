@@ -96,6 +96,14 @@ class FFNN:
         self.loss = None
         self.verbose = verbose
         self.weight_history = []
+        self.lr = None
+
+        # Validasi input
+        try:
+            self.validate_input()
+        except ValueError as e:
+            print(f"Error: {e}")
+            raise
 
     def init_bobot(self):
         if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO.value:
@@ -122,6 +130,50 @@ class FFNN:
             )
         else:
             raise ValueError("Metode inisialisasi bobot tidak valid")
+
+    def validate_input(self):
+        if self.jumlah_layer < 2:
+            raise ValueError("Jumlah layer minimal 3")
+
+        if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
+            raise ValueError(
+                "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
+            )
+
+        for i in range(self.jumlah_layer):
+            if (
+                self.fungsi_aktivasi_str[i]
+                not in ActivationFunction.global_fungsi_aktivasi
+            ):
+                raise ValueError(
+                    "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
+                )
+
+        if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
+            raise ValueError("Fungsi loss tidak valid")
+
+        if (
+            self.inisialisasi_bobot_str
+            not in WeightInitiation.global_inisialisasi_bobot
+        ):
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
+        if hasattr(self, "y") and self.y is not None:
+            if self.y.shape[1] != self.jumlah_neuron[-1]:
+                raise ValueError(
+                    "Jumlah neuron pada layer terakhir tidak sesuai dengan y (y.shape[1] harus {})".format(
+                        self.jumlah_neuron[-1]
+                    )
+                )
+        if hasattr(self, "X") and self.X is not None:
+            if self.X.shape[1] != self.jumlah_neuron[0]:
+                raise ValueError(
+                    "Jumlah neuron pada layer input tidak sesuai dengan X (X.shape[1] harus {})".format(
+                        self.jumlah_neuron[0]
+                    )
+                )
+
+        return True
 
     def forward(self, X: np.ndarray):
         """
@@ -205,6 +257,12 @@ class FFNN:
         self.y = y
         self.lr = lr
         self.batch = batch
+
+        try:
+            self.validate_input()
+        except ValueError as e:
+            print(f"Error: {e}")
+            raise
 
         num_samples = X.shape[0]
         now = time.time()
