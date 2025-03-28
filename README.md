@@ -41,6 +41,7 @@
 3. Setup kernel on `src/main.ipynb`
 4. Adjust model configuration and data
 5. run all!
+6. To visualize weights and weight gradients of a neuron, double-click on the neuron in the visualization.
 
 ## Bonus
 
@@ -58,6 +59,6 @@
 | Fit, Predict, Save, dan Load                               | 13522164, 13522134, 13522157 |
 | Visualisasi Graf, Distribusi Bobot, dan Distribusi Gradien | 13522157                     |
 
-13522134 - Sabrina Maharani  
+13522134 - Shabrina Maharani  
 13522157 - Muhammad Davis Adhipramana  
 13522164 - Valentino Chryslie Triadi  
