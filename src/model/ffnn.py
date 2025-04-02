@@ -29,6 +29,10 @@ class FFNN:
         Menampilkan log training
         0 = Tidak menampilkan apa-apa
         1 = Menampilkan progress bar
+    @param l1_lambda: float
+        Lambda untuk regularisasi L1
+    @param l2_lambda: float
+        Lambda untuk regularisasi L2
 
     Optional Param:
     -- Weight Initiation -> uniform --
@@ -62,6 +66,8 @@ class FFNN:
         std: float = 1.0,
         seed: int = 0,
         verbose: int = 0,
+        l1_lambda: float = 0.0,
+        l2_lambda: float = 0.0,
     ):
         self.jumlah_neuron = jumlah_neuron
         self.jumlah_layer = len(jumlah_neuron) - 1
@@ -83,6 +89,11 @@ class FFNN:
         self.inisialisasi_bobot = WeightInitiation(
             inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
         )
+
+        # Inisialisasi lambda 
+        self.l1_lambda = l1_lambda
+        self.l2_lambda = l2_lambda
+
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.mean = mean
@@ -229,7 +240,19 @@ class FFNN:
         gradients = []
         for i in range(self.jumlah_layer):
             X_with_bias = np.hstack([np.ones((hasil[i].shape[0], 1)), hasil[i]])
-            gradients.append((X_with_bias.T @ deltas[i]) / hasil[i].shape[0])
+
+            weight_gradient = (X_with_bias.T @ deltas[i]) / hasil[i].shape[0]
+
+            # L1 
+            if self.l1_lambda > 0:
+                weight_gradient += self.l1_lambda * np.sign(self.bobot[i])
+            # L2
+            if self.l2_lambda > 0:
+                weight_gradient += self.l2_lambda * self.bobot[i]
+
+            # Update gradien
+            gradients.append(weight_gradient)
+            
         return gradients
 
     def update(self, gradients):
