@@ -13,7 +13,7 @@ import numpy as np
 from sklearn.neural_network import MLPClassifier
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
-from model.ffnn2 import FFNN2
+from model.ffnn import FFNN2
 
 
 MODEL_FILENAME = "ffnn_model.pkl"

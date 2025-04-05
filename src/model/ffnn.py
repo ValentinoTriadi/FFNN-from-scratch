@@ -1,7 +1,13 @@
 import numpy as np
-from src.utils.activationFunction import ActivationFunction, ActivationFunctionMethod
-from src.utils.lossFunction import LossFunction, LossFunctionMethod
-from src.utils.weightInitiation import WeightInitiation, WeightInitiationMethod
+import matplotlib.pyplot as plt
+import concurrent.futures
+from typing import Literal
+from utils.activationFunction import ActivationFunction
+from utils.lossFunction import LossFunction
+from utils.weightInitiation import WeightInitiation, WeightInitiationMethod
+from view.gui import GUI, GraphModel
+from PyQt6.QtWidgets import QApplication
+import time, sys, pickle
 
 
 class FFNN:
@@ -19,6 +25,14 @@ class FFNN:
     @param inisialisasi_bobot: str
         Metode inisialisasi bobot
         ['zero', 'uniform', 'normal', 'xavier-uniform', 'xavier-normal']
+    @param verbose: int
+        Menampilkan log training
+        0 = Tidak menampilkan apa-apa
+        1 = Menampilkan progress bar
+    @param l1_lambda: float
+        Lambda untuk regularisasi L1
+    @param l2_lambda: float
+        Lambda untuk regularisasi L2
 
     Optional Param:
     -- Weight Initiation -> uniform --
@@ -41,122 +55,124 @@ class FFNN:
     def __init__(
         self,
         jumlah_neuron: list[int],
-        fungsi_aktivasi: list[ActivationFunctionMethod],
-        fungsi_loss: LossFunctionMethod,
-        inisialisasi_bobot: WeightInitiationMethod,
+        fungsi_aktivasi: list[Literal["Linear", "Sigmoid", "ReLU", "Tanh", "Softmax"]],
+        fungsi_loss: Literal["MSE", "BinaryCrossEntropy", "CategoricalCrossEntropy"],
+        inisialisasi_bobot: Literal[
+            "zero", "uniform", "normal", "xavier-uniform", "xavier-normal"
+        ],
         lower_bound: float = -1.0,
         upper_bound: float = 1.0,
         mean: float = 0.0,
         std: float = 1.0,
         seed: int = 0,
+        verbose: int = 0,
+        l1_lambda: float = 0.0,
+        l2_lambda: float = 0.0,
     ):
-
         self.jumlah_neuron = jumlah_neuron
         self.jumlah_layer = len(jumlah_neuron) - 1
+
+        # Inisialisasi fungsi aktivasi
         self.fungsi_aktivasi_str = fungsi_aktivasi
-        self.fungsi_loss_str = fungsi_loss
-        self.inisialisasi_bobot_str = inisialisasi_bobot
-
-        # Validasi input
-        try:
-            self.validate_input()
-        except ValueError as e:
-            print(f"\033[91m{e}\033[0m")
-            exit()
-
-        self.fungsi_aktivasi_class = ActivationFunction(fungsi_aktivasi)
-        self.fungsi_loss_class = LossFunction(fungsi_loss)
-        self.inisialisasi_bobot_class = WeightInitiation(
-            inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
+        self.fungsi_aktivasi = list(
+            ActivationFunction(fungsi_aktivasi).get_batch_activation_function()
         )
+
+        # Inisialisasi fungsi loss
+        self.fungsi_loss_str = fungsi_loss
+        self.fungsi_loss_class = LossFunction(self.fungsi_loss_str)
+        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
 
         # Inisialisasi bobot
         # ? Bias dimasukkan ke dalam bobot indeks terakhir
+        self.inisialisasi_bobot_str = inisialisasi_bobot
+        self.inisialisasi_bobot = WeightInitiation(
+            inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
+        )
+
+        # Inisialisasi loss
+        self.training_loss_results = []
+        self.validation_loss_results = []
+
+        # Inisialisasi lambda 
+        self.l1_lambda = l1_lambda
+        self.l2_lambda = l2_lambda
+
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.mean = mean
         self.std = std
         self.seed = seed
-
-        # inisialisasi fungsi aktivasi
-        self.fungsi_aktivasi = list(
-            self.fungsi_aktivasi_class.get_batch_activation_function()
-        )
-
-        # inisialisasi fungsi loss
-        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
+        self.init_bobot()
 
         self.X = None
         self.y = None
-        self.bobot = None
         self.hasil = None
         self.loss = None
+        self.verbose = verbose
         self.weight_history = []
+        self.lr = None
 
-        print("Model berhasil diinisialisasi")
+        # Validasi input
+        try:
+            self.validate_input()
+        except ValueError as e:
+            print(f"Error: {e}")
+            raise
 
-    def __str__(self):
-        ret = ""
-        ret += "\033[92m\nModel Feed Forward Neural Network\033[0m"
-        ret += "\033[92m\nJumlah Layer: \033[0m" + str(self.jumlah_layer)
-        ret += "\033[92m\nJumlah Neuron: \033[0m" + str(self.jumlah_neuron)
-        ret += "\033[92m\nFungsi Aktivasi: \033[0m" + str(self.fungsi_aktivasi_str)
-        ret += "\033[92m\nFungsi Loss: \033[0m" + str(self.fungsi_loss_str)
-        ret += "\033[92m\nInisialisasi Bobot: \033[0m" + str(
-            self.inisialisasi_bobot_str
-        )
-        ret += "\033[92m\nBobot: \033[0m"
-        for i in range(len(self.bobot)):
-            ret += "\n\033[93mEpoch " + str(i) + ":\033[0m"
-            for j in range(len(self.bobot[i])):
-                ret += "\n\033[94mLayer " + str(j) + ":\033[0m\n"
-                ret += str(self.bobot[i][j])
-        ret += "\033[92m\nHasil: \033[0m"
-        for i in range(len(self.hasil)):
-            ret += "\033[93m\nEpoch " + str(i) + ":\033[0m"
-            for j in range(len(self.hasil[i])):
-                ret += (
-                    "\033[94m\nLayer " + str(j) + ":\033[0m\n" + str(self.hasil[i][j])
-                )
-            ret += "\n"
-        ret += "\033[92m\nLoss: \033[0m" + str(self.loss)
-        ret += "\033[92m\nX: \033[0m" + str(self.X)
-        ret += "\033[92m\ny: \033[0m" + str(self.y)
-        ret += "\033[92m\nLearning Rate: \033[0m" + str(self.lr)
-        return ret
+    def init_bobot(self):
+        if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO.value:
+            self.bobot = self.inisialisasi_bobot.init_weights()
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM.value:
+            self.bobot = self.inisialisasi_bobot.init_weights(
+                low=self.lower_bound,
+                high=self.upper_bound,
+                seed=self.seed,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL.value:
+            self.bobot = self.inisialisasi_bobot.init_weights(
+                mean=self.mean,
+                std=self.std,
+                seed=self.seed,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM.value:
+            self.bobot = self.inisialisasi_bobot.init_weights(
+                seed=self.seed,
+            )
+        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL.value:
+            self.bobot = self.inisialisasi_bobot.init_weights(
+                seed=self.seed,
+            )
+        else:
+            raise ValueError("Metode inisialisasi bobot tidak valid")
 
     def validate_input(self):
-        # if self.jumlah_layer < 2:
-        #     raise ValueError("Jumlah layer minimal 3")
-        # if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
-        #     raise ValueError(
-        #         "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
-        #     )
-        # for i in range(self.jumlah_layer):
-        #     if (
-        #         self.fungsi_aktivasi_str[i]
-        #         not in ActivationFunction.global_fungsi_aktivasi
-        #     ):
-        #         raise ValueError(
-        #             "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
-        #         )
-        # if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
-        #     raise ValueError("Fungsi loss tidak valid")
-        # if (
-        #     self.inisialisasi_bobot_str
-        #     not in WeightInitiation.global_inisialisasi_bobot
-        # ):
-        #     raise ValueError("Metode inisialisasi bobot tidak valid")
-        # if hasattr(self, "y") and self.y is not None:
-        #     if self.y.shape[1] != self.jumlah_neuron[-1]:
-        #         raise ValueError(
-        #             "Jumlah neuron pada layer terakhir tidak sesuai dengan y"
-        #         )
-        # if hasattr(self, "X") and self.X is not None:
-        #     if self.X.shape[1] != self.jumlah_neuron[0]:
-        #         raise ValueError("Jumlah neuron pada layer input tidak sesuai dengan X")
+        if self.jumlah_layer < 2:
+            raise ValueError("Jumlah layer minimal 3")
 
-        # return True
+        if len(self.fungsi_aktivasi_str) != self.jumlah_layer:
+            raise ValueError(
+                "Panjang list fungsi aktivasi tidak sesuai dengan jumlah layer"
+            )
+
+        for i in range(self.jumlah_layer):
+            if (
+                self.fungsi_aktivasi_str[i]
+                not in ActivationFunction.global_fungsi_aktivasi
+            ):
+                raise ValueError(
+                    "Fungsi aktivasi tidak valid pada layer ke-{}".format(i)
+                )
+
+        if self.fungsi_loss_str not in LossFunction.global_fungsi_loss:
+            raise ValueError("Fungsi loss tidak valid")
+
+        if (
+            self.inisialisasi_bobot_str
+            not in WeightInitiation.global_inisialisasi_bobot
+        ):
+            raise ValueError("Metode inisialisasi bobot tidak valid")
+
         if hasattr(self, "y") and self.y is not None:
             if self.y.shape[1] != self.jumlah_neuron[-1]:
                 raise ValueError(
@@ -171,40 +187,10 @@ class FFNN:
                         self.jumlah_neuron[0]
                     )
                 )
+
         return True
 
-    def init_bobot(self):
-        if self.inisialisasi_bobot_str == WeightInitiationMethod.ZERO.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights()
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.UNIFORM.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                low=self.lower_bound,
-                high=self.upper_bound,
-                seed=self.seed,
-            )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.NORMAL.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                mean=self.mean,
-                std=self.std,
-                seed=self.seed,
-            )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_UNIFORM.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                seed=self.seed,
-            )
-        elif self.inisialisasi_bobot_str == WeightInitiationMethod.XAVIER_NORMAL.value:
-            self.bobot = self.inisialisasi_bobot_class.init_weights(
-                seed=self.seed,
-            )
-        else:
-            raise ValueError("Metode inisialisasi bobot tidak valid")
-
-    def print_bobot(self):
-        for i in range(self.jumlah_layer):
-            print("Layer ke-", i)
-            print(self.bobot[i])
-
-    def forward(self, last: bool = False):
+    def forward(self, X: np.ndarray):
         """
         Melakukan feed forward pada model
 
@@ -213,281 +199,279 @@ class FFNN:
         @return: np.ndarray
             Output dari model
         """
-        pred = np.empty(self.jumlah_layer, dtype=object)
+        hasil = [X]
         for i in range(self.jumlah_layer):
-            if i == 0:
-                XWithBias = np.clip(
-                    np.hstack(
-                        (
-                            np.ones((self.X.shape[0], 1)),  # menambahkan kolom bias
-                            self.X,
-                        )
-                    ),
-                    0.0001,
-                    None,
-                )
-
-                if not last:
-                    self.hasil[self.current_epoch][i] = np.matmul(
-                        XWithBias,
-                        self.bobot[i],
-                    )
-                else:
-                    pred[i] = np.matmul(
-                        XWithBias,
-                        self.bobot[i],
-                    )
-            else:
-                prev_output = (
-                    self.hasil[self.current_epoch][i - 1] if not last else pred[i - 1]
-                )
-                XWithBias = np.clip(
-                    np.hstack(
-                        (
-                            np.ones((hasilSebelumnya.shape[0], 1)),
-                            hasilSebelumnya,
-                        )
-                    ),
-                    0.0001,
-                    None,
-                )
-
-                if not last:
-                    self.hasil[self.current_epoch][i] = np.matmul(
-                        XWithBias,
-                        self.bobot[i],
-                    )
-                else:
-                    pred[i] = np.matmul(
-                        XWithBias,
-                        self.bobot[i],
-                    )
-
-            if not last:
-                self.hasil[self.current_epoch][i] = self.fungsi_aktivasi[i](
-                    self.hasil[self.current_epoch][i]
-                )
-            else:
-                pred[i] = self.fungsi_aktivasi[i](pred[i])
-
-        if not last:
-            self.loss[self.current_epoch] = self.fungsi_loss(
-                self.hasil[self.current_epoch][-1], self.y
+            X_with_bias = np.clip(
+                np.hstack([np.ones((hasil[-1].shape[0], 1)), hasil[-1]]), 0.000001, None
             )
-        else:
-            return pred
+            Z = np.dot(X_with_bias, self.bobot[i])
+            hasil.append(self.fungsi_aktivasi[i](Z))
+        return hasil
 
-    def backward(self, X: np.ndarray, y: np.ndarray):
+    def backward(self, hasil: np.ndarray, y: np.ndarray):
         """
         Melakukan backpropagation pada model.
         """
-        self.deltas = np.empty(self.jumlah_layer, dtype=object)
-        self.gradients = np.empty(self.jumlah_layer, dtype=object)
+        deltas = [None] * self.jumlah_layer
+        loss_derivative = self.fungsi_loss_class.get_loss_derivative()
+        activation_derivative = ActivationFunction(
+            self.fungsi_aktivasi_str
+        ).get_activation_derivative(self.fungsi_aktivasi_str[-1])
 
-        # Hitung delta untuk output layer
-        output_layer_activation_derivative = (
-            self.fungsi_aktivasi_class.get_activation_derivative(
-                self.fungsi_aktivasi_str[-1]
-            )
-        )
-
-        if("Softmax" in self.fungsi_aktivasi_str and "CategoricalCrossEntropy" in self.fungsi_loss_str):
-            self.deltas[-1] = self.hasil[self.current_epoch][-1] - y
-        
+        if self.fungsi_aktivasi_str[-1] == "Softmax":
+            loss_grad = loss_derivative(hasil[-1], y)
+            deltas[-1] = activation_derivative(hasil[-1], loss_grad)
         else:
-            self.deltas[-1] = (
-                self.hasil[self.current_epoch][-1] - y
-            ) * output_layer_activation_derivative(self.hasil[self.current_epoch][-1])
-
-        # Hitung delta untuk hidden layer (dari belakang ke depan)
-        for i in range(
-            self.jumlah_layer - 1, 0, -1
-        ):  # Dari layer output ke hidden pertama
-            activation_derivative = (
-                self.fungsi_aktivasi_class.get_activation_derivative(
-                    self.fungsi_aktivasi_str[i - 1]
-                )
+            deltas[-1] = loss_derivative(hasil[-1], y) * activation_derivative(
+                hasil[-1]
             )
-            self.deltas[i - 1] = np.dot(
-                self.deltas[i], self.bobot[i][1:].T
-            ) * activation_derivative(self.hasil[self.current_epoch][i - 1])
 
-        # Hitung gradien untuk setiap layer
-        for i in range(self.jumlah_layer):
-            if i == 0:
-                input_to_layer = X  # Input ke layer pertama adalah X
+        for i in range(self.jumlah_layer - 2, -1, -1):
+            activation_derivative_i = ActivationFunction(
+                self.fungsi_aktivasi_str
+            ).get_activation_derivative(self.fungsi_aktivasi_str[i])
+
+            upstream_gradient = deltas[i + 1] @ self.bobot[i + 1][1:].T
+
+            if self.fungsi_aktivasi_str[i] == "Softmax":
+                # Compute delta = (upstream_gradient) @ Jacobian
+                deltas[i] = activation_derivative_i(
+                    hasil[i + 1], grad_loss=upstream_gradient
+                )
             else:
-                input_to_layer = self.hasil[self.current_epoch][i - 1]
+                deltas[i] = upstream_gradient * activation_derivative_i(hasil[i + 1])
 
-            # Tambahkan kolom bias
-            input_with_bias = np.hstack(
-                (np.ones((input_to_layer.shape[0], 1)), input_to_layer)
-            )
+        gradients = []
+        for i in range(self.jumlah_layer):
+            X_with_bias = np.hstack([np.ones((hasil[i].shape[0], 1)), hasil[i]])
 
-            # Hitung gradien bobot
-            weight_grad = (
-                np.dot(input_with_bias.T, self.deltas[i]) / input_to_layer.shape[0]
-            )
+            weight_gradient = (X_with_bias.T @ deltas[i]) / hasil[i].shape[0]
 
-            # Pisahkan bias dan bobot
-            self.gradients[i] = {
-                "weights": weight_grad[1:],  # Semua kecuali baris pertama (bias)
-                "bias": weight_grad[0:1],  # Hanya baris pertama (bias)
-            }
-        
+            # L1 
+            if self.l1_lambda > 0:
+                weight_gradient += self.l1_lambda * np.sign(self.bobot[i])
+            # L2
+            if self.l2_lambda > 0:
+                weight_gradient += self.l2_lambda * self.bobot[i]
 
-    def update(self, lr: float):
+            # Update gradien
+            gradients.append(weight_gradient)
+            
+        return gradients
+
+    def update(self, gradients):
         """
-        Melakukan update bobot dan bias pada model dengan cara yang benar.
+        Melakukan update bobot berdasarkan gradien yang dihitung
         """
         for i in range(self.jumlah_layer):
-            if self.gradients[i] is not None:
+            self.bobot[i] -= self.lr * gradients[i]
 
-                # Update seluruh bobot sekaligus, termasuk bias
-                self.bobot[i] -= lr * np.vstack(
-                    (self.gradients[i]["bias"], self.gradients[i]["weights"])
-                )
-
-                self.bobot[i] = np.clip(self.bobot[i], 0.0001, None)
-
-    def fit(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        batch: int,
-        lr: float,
-        epoch: int,
-        verbose: int = 0,
-    ):
+    def fit(self, X: np.ndarray, y: np.ndarray, batch: int, lr: float, epochs: int, X_val=None, y_val=None):
         """
-        Melakukan training model
-
+        Melatih model dengan data latih
         @param X: np.ndarray
-            Input data
+            Data latih
         @param y: np.ndarray
-            Target data
+            Target data latih
         @param batch: int
-            Jumlah batch
+            Ukuran batch
         @param lr: float
             Learning rate
-        @param epoch: int
+        @param epochs: int
             Jumlah epoch
-        @param verbose: int
-            Menampilkan log training
-            0 = Tidak menampilkan apa-apa
-            1 = Menampilkan progress bar
         """
-        # Init Model Fit
-
-        self.loss = np.zeros(epoch)
-        self.X = X.astype(float)
-        self.y = y.astype(float)
+        self.X = X
+        self.y = y
         self.lr = lr
+        self.batch = batch
 
         try:
             self.validate_input()
         except ValueError as e:
-            print(f"\033[91m{e}\033[0m")
-            exit()
-
-        self.init_bobot()
-
-        self.hasil =  [np.empty(self.jumlah_layer, dtype=object) for _ in range(epoch)]
-
-        self.loss = np.zeros(epoch)
+            print(f"Error: {e}")
+            raise
 
         num_samples = X.shape[0]
-        for ep in range(epoch):
-            self.current_epoch = ep
-            epoch_loss = 0
-            # Acak data di awal setiap epoch
-            indices = np.arange(num_samples)
-            np.random.shuffle(indices)
+        now = time.time()
+
+        for epoch in range(epochs):
+            # Shuffle data
+            indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
-            num_batches = int(np.ceil(num_samples / batch))
-            for b in range(num_batches):
-                start = b * batch
-                end = min(num_samples, (b + 1) * batch)
-                X_batch = X_shuffled[start:end]
-                y_batch = y_shuffled[start:end]
-                self.X = X_batch
-                self.y = y_batch
-                # Inisialisasi hasil untuk batch saat ini
-                self.hasil[self.current_epoch] = [None] * self.jumlah_layer
-                self.forward()
-                epoch_loss += self.loss[self.current_epoch]
-                self.backward(X_batch, y_batch)
-                self.update(lr)
-            # Rata-rata loss tiap epoch
-            self.loss[self.current_epoch] = epoch_loss / num_batches
-            # Simpan bobot untuk epoch ini
-            self.weight_history.append([layer.copy() for layer in self.bobot])
-            if verbose == 1:
-                print("\033[92mEpoch ke-", i, "\033[0m")
-            self.forward()
-            self.backward(self.X, self.y)
-            self.update(lr)
-            # if i < epoch - 1:
-            #     self.bobot[i + 1] = [layer.copy() for layer in self.bobot[i]]
-            if verbose == 1:
-                print("Loss: ", self.loss[i])
+
+            def process_batch(start_idx):
+                end_idx = start_idx + batch
+                X_batch = X_shuffled[start_idx:end_idx]
+                y_batch = y_shuffled[start_idx:end_idx]
+
+                # Forward & Backward per batch
+                hasil = self.forward(X_batch)
+                gradients = self.backward(hasil, y_batch)
+
+                return gradients
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for i in range(0, num_samples, batch):
+                    gradients = executor.submit(process_batch, i).result()
+
+                    self.gradients = gradients
+
+                    # Update bobot
+                    self.update(gradients)
+
+            # Training loss per epoch
+            hasil_final = self.forward(X)
+            loss = self.fungsi_loss(hasil_final[-1], y)
+
+            # Validation loss per epoch
+            if X_val is not None and y_val is not None:
+                hasil_val = self.forward(X_val)
+                val_loss = self.fungsi_loss(hasil_val[-1], y_val)
+                self.validation_loss_results.append(val_loss)
+            else:
+                val_loss = None
+                
+            if self.verbose == 1:
+                val_str = f" - Val Loss: {val_loss:.6f}" if val_loss is not None else ""
+                print(
+                    f"\r[{('█' * int(50 * (epoch + 1) / epochs)).ljust(50,'░')}] "
+                    f"- {epoch+1}/{epochs} - {(epoch+1)*100/epochs:.1f}% "
+                    f"- {(time.time() - now):.2f}s - Training Loss: {loss:.6f}{val_str}",
+                    end="", flush=True
+                )
+
+        if self.verbose == 1:
+            print(f"\nFinal Training Loss: {loss:.6f}")
+            if X_val is not None:
+                print(f"Final Validation Loss: {self.validation_loss_results[-1]:.6f}")
 
     def predict(self, X: np.ndarray):
         """
-        Melakukan prediksi data"
+        Melakukan prediksi dengan model
+        @param X: np.ndarray
+            Data input untuk prediksi
+        @return: np.ndarray
+            Hasil prediksi
         """
-        output = self.forward(last=True)
-        return np.argmax(output[-1], axis=1)
+        return np.argmax(self.forward(X)[-1], axis=1)
 
-    def tampilkan_model(self):
+    def save_model_pickle(self, filename: str):
         """
-        Menampilkan model
+        Menyimpan model ke dalam file menggunakan pickle.
+
+        @param filename: str
+            Nama file untuk menyimpan model (format .pkl)
         """
-        print("Jumlah Layer: ", self.jumlah_layer)
-        print("Jumlah Neuron: ", self.jumlah_neuron)
-        print("Fungsi Aktivasi: ", self.fungsi_aktivasi)
-        print("Fungsi Loss: ", self.fungsi_loss)
-        print("Inisialisasi Bobot: ", self.inisialisasi_bobot)
-        print("Bobot: ", self.bobot)
-        print("Bias: ", self.bias)
-        print("Fungsi Aktivasi: ", self.fungsi_aktivasi)
-        print("Fungsi Loss: ", self.fungsi_loss)
-        print()
-        return
+        model_data = {
+            "jumlah_neuron": self.jumlah_neuron,
+            "jumlah_layer": self.jumlah_layer,
+            "fungsi_aktivasi_str": self.fungsi_aktivasi_str,
+            "fungsi_loss_str": self.fungsi_loss_str,
+            "inisialisasi_bobot_str": self.inisialisasi_bobot_str,
+            "bobot": self.bobot,
+            "gradients": self.gradients if hasattr(self, "gradients") else None,
+            "lr": self.lr if hasattr(self, "lr") else None,
+        }
+
+        with open(filename, "wb") as file:
+            pickle.dump(model_data, file)
+
+        print(f"Model berhasil disimpan ke {filename}")
+
+    @staticmethod
+    def load_model_pickle(self, filename: str):
+        """
+        Memuat model dari file pickle (.pkl).
+
+        @param filename: str
+            Nama file model yang akan dimuat
+        """
+        with open(filename, "rb") as file:
+            model_data = pickle.load(file)
+
+        # Set ulang parameter model
+        self.jumlah_neuron = model_data["jumlah_neuron"]
+        self.jumlah_layer = model_data["jumlah_layer"]
+        self.fungsi_aktivasi_str = model_data["fungsi_aktivasi_str"]
+        self.fungsi_loss_str = model_data["fungsi_loss_str"]
+        self.inisialisasi_bobot_str = model_data["inisialisasi_bobot_str"]
+        self.bobot = model_data["bobot"]
+        self.gradients = model_data["gradients"]
+        self.lr = model_data["lr"]
+
+        self.fungsi_aktivasi = [
+            ActivationFunction([method]).get_activation_function(method)
+            for method in self.fungsi_aktivasi_str
+        ]
+        self.fungsi_loss_class = LossFunction(self.fungsi_loss_str)
+        self.fungsi_loss = self.fungsi_loss_class.get_lost_function()
+        self.inisialisasi_bobot = WeightInitiation(
+            self.inisialisasi_bobot_str, self.jumlah_layer, self.jumlah_neuron
+        )
+
+        print(f"Model berhasil dimuat dari {filename}")
+
+        return self
 
     def tampilkan_distribusi_bobot(self, layer: list[int]):
         """
-        Menampilkan distribusi bobot
+        Menampilkan histogram distribusi bobot dari layer tertentu.
 
         @param layer: list[int]
-            Layer yang ingin ditampilkan distribusi bobotnya
+            List indeks layer yang ingin ditampilkan distribusi bobotnya.
         """
-        pass
+        plt.figure(figsize=(10, 5))
+        for i, l in enumerate(layer):
+            if l >= self.jumlah_layer:
+                print(f"Layer {l} tidak valid")
+                continue
+
+            plt.subplot(1, len(layer), i + 1)
+            plt.hist(self.bobot[l].flatten(), bins=50, color="blue", alpha=0.7)
+            plt.title(f"Distribusi Bobot Layer {l}")
+            plt.xlabel("Nilai Bobot")
+            plt.ylabel("Frekuensi")
+
+        plt.tight_layout()
+        plt.show()
 
     def tampilkan_distribusi_gradient_bobot(self, layer: list[int]):
         """
-        Menampilkan distribusi gradient bobot
+        Menampilkan histogram distribusi gradient bobot dari layer tertentu.
 
         @param layer: list[int]
-            Layer yang ingin ditampilkan distribusi gradient bobotnya
+            List indeks layer yang ingin ditampilkan distribusi gradient bobotnya.
         """
-        pass
+        if not hasattr(self, "gradients") or self.gradients is None:
+            print("Gradien belum dihitung! Jalankan training dulu.")
+            return
 
-    def save_model(self, filename: str):
-        """
-        Menyimpan model ke dalam file
+        plt.figure(figsize=(10, 5))
+        for i, l in enumerate(layer):
+            if l >= self.jumlah_layer:
+                print(f"Layer {l} tidak valid")
+                continue
 
-        @param filename: str
-            Nama file
-        """
-        pass
+            plt.subplot(1, len(layer), i + 1)
+            gradient_data = self.gradients[l]["weights"].flatten()
+            plt.hist(gradient_data, bins=50, color="red", alpha=0.7)
+            plt.title(f"Distribusi Gradien Layer {l}")
+            plt.xlabel("Nilai Gradien")
+            plt.ylabel("Frekuensi")
 
-    def load_model(self, filename: str):
-        """
-        Memuat model dari file
+        plt.tight_layout()
+        plt.show()
 
-        @param filename: str
-            Nama file
+    def model_visualize(self):
         """
-        pass
+        Menampilkan visualisasi model
+        """
+        graph_model = GraphModel(self.jumlah_neuron, self.bobot, self.gradients)
+        layer_distribution_input = [0, 1, 2, 3]
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+        gui = GUI(graph_model, layer_distribution_input)
+        return gui
+        # gui.show()
