@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QTabWidget, QSizePolicy
 from view.layersDistribution import SinglePlotDistribution, MultiPlotDistribution
 from model.graph.model import GraphModel
+from view.lossDistribution import LossDistribution
 
 class DistributionTabs(QTabWidget):
     """
@@ -32,5 +33,13 @@ class DistributionTabs(QTabWidget):
         dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model,layer_selected, 'histogram'),"Histogram (Single)")
         dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"gaussian"), "Gaussian (Single)")
         dist.addTab(MultiPlotDistribution.GradientWeightDistribution(graph_model, layer_selected,"scatter"), "Scatter (Single)")
+
+        return dist
+
+    @classmethod
+    def CreateLossDistribution(cls, graph_model : GraphModel, parent = None):
+        dist = cls(parent)
+        dist.addTab(LossDistribution(graph_model.training_loss, "Training Loss"), "Training Loss")
+        dist.addTab(LossDistribution(graph_model.validation_loss, "Validation Loss"), "Validation Loss")
 
         return dist

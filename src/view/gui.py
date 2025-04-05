@@ -60,4 +60,6 @@ class GUI(QMainWindow):
         # Gradient Weight Distribution
         self.tab_widget.addTab(DistributionTabs.CreateGradientWeightDistribution(graph_model, selected_distribution_layer), "Gradient Weight Distribution")
 
+        self.tab_widget.addTab(DistributionTabs.CreateLossDistribution(graph_model), "Loss Distribution")
+
         self.left_layout.addWidget(self.tab_widget)
