@@ -323,6 +323,7 @@ class FFNN:
             # Training loss per epoch
             hasil_final = self.forward(X)
             loss = self.fungsi_loss(hasil_final[-1], y)
+            self.training_loss_results.append(loss)
 
             # Validation loss per epoch
             if X_val is not None and y_val is not None:
@@ -414,60 +415,12 @@ class FFNN:
 
         return self
 
-    def tampilkan_distribusi_bobot(self, layer: list[int]):
-        """
-        Menampilkan histogram distribusi bobot dari layer tertentu.
-
-        @param layer: list[int]
-            List indeks layer yang ingin ditampilkan distribusi bobotnya.
-        """
-        plt.figure(figsize=(10, 5))
-        for i, l in enumerate(layer):
-            if l >= self.jumlah_layer:
-                print(f"Layer {l} tidak valid")
-                continue
-
-            plt.subplot(1, len(layer), i + 1)
-            plt.hist(self.bobot[l].flatten(), bins=50, color="blue", alpha=0.7)
-            plt.title(f"Distribusi Bobot Layer {l}")
-            plt.xlabel("Nilai Bobot")
-            plt.ylabel("Frekuensi")
-
-        plt.tight_layout()
-        plt.show()
-
-    def tampilkan_distribusi_gradient_bobot(self, layer: list[int]):
-        """
-        Menampilkan histogram distribusi gradient bobot dari layer tertentu.
-
-        @param layer: list[int]
-            List indeks layer yang ingin ditampilkan distribusi gradient bobotnya.
-        """
-        if not hasattr(self, "gradients") or self.gradients is None:
-            print("Gradien belum dihitung! Jalankan training dulu.")
-            return
-
-        plt.figure(figsize=(10, 5))
-        for i, l in enumerate(layer):
-            if l >= self.jumlah_layer:
-                print(f"Layer {l} tidak valid")
-                continue
-
-            plt.subplot(1, len(layer), i + 1)
-            gradient_data = self.gradients[l]["weights"].flatten()
-            plt.hist(gradient_data, bins=50, color="red", alpha=0.7)
-            plt.title(f"Distribusi Gradien Layer {l}")
-            plt.xlabel("Nilai Gradien")
-            plt.ylabel("Frekuensi")
-
-        plt.tight_layout()
-        plt.show()
 
     def model_visualize(self):
         """
         Menampilkan visualisasi model
         """
-        graph_model = GraphModel(self.jumlah_neuron, self.bobot, self.gradients)
+        graph_model = GraphModel(self.jumlah_neuron, self.bobot, self.gradients, self.training_loss_results, self.validation_loss_results)
         layer_distribution_input = [0, 1, 2, 3]
         app = QApplication.instance()
         if app is None:
