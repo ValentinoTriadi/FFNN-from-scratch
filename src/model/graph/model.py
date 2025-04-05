@@ -14,12 +14,15 @@ class GraphModel:
     - weight_neuron_data : List of NpArray that save the weight of each edge
     - weight_grads_data : List of NpArray that save the gradient weight of each edge
     """
-    def __init__(self,  neuron_list : list[int], weight_neuron_data : list[list[list[str]]], weight_grads_data : list[list[list[str]]]):
+    def __init__(self,  neuron_list : list[int], weight_neuron_data : list[list[list[str]]], weight_grads_data : list[list[list[str]]], training_loss : list[float], validation_loss : list[float]):
         self.nodes : List[GraphNode] = []
         self.edges : List[GraphEdge]= []
         self.layers : List[GraphLayer] = []
         self.weights: List[np.ndarray] = [] 
         self.gradien_weight : List[np.ndarray] = []
+        self.training_loss = training_loss
+        self.validation_loss = validation_loss
+        
         self.x_spacing = GraphConfig.LAYER_SPACING
         self.y_range = GraphConfig.LAYER_Y_RANGE
         
@@ -28,6 +31,7 @@ class GraphModel:
         self._initiate_layers(neuron_list)
         self._save_weight_gradient_weight(weight_neuron_data, weight_grads_data)
         self._create_fully_connected_edges()
+        
 
     # Save the weight and gradient weight for easier access        
     def _save_weight_gradient_weight(self, weight_neuron_data : list

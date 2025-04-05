@@ -38,6 +38,8 @@ class FFNN2:
         self.inisialisasi_bobot = WeightInitiation(
             inisialisasi_bobot, self.jumlah_layer, jumlah_neuron
         )
+        self.training_loss_results = []
+        self.validation_loss_results = []
 
         self.init_bobot()
         self.fungsi_aktivasi_str = fungsi_aktivasi
@@ -94,10 +96,9 @@ class FFNN2:
         for i in range(self.jumlah_layer):
             self.bobot[i] -= lr * gradients[i]
 
-    def fit(self, X, y, batch, lr, epochs):
+    def fit(self, X, y, batch, lr, epochs, X_val=None, y_val=None):
         num_samples = X.shape[0]
         now = time.time()
-
         for epoch in range(epochs):
             indices = np.random.permutation(num_samples)
             X_shuffled = X[indices]
@@ -123,17 +124,32 @@ class FFNN2:
                     # Update bobot
                     self.update(gradients, lr)
 
-            # loss per epoch
+            # training loss per epoch
             hasil_final = self.forward(X)
             loss = self.fungsi_loss(hasil_final[-1], y)
+            self.training_loss_results.append(loss)
+
+            # validation loss per epoch
+            if X_val is not None and y_val is not None:
+                hasil_val = self.forward(X_val)
+                val_loss = self.fungsi_loss(hasil_val[-1], y_val)
+                self.validation_loss_results.append(val_loss)
+            else:
+                val_loss = None
+                
             if self.verbose == 1:
+                val_str = f" - Val Loss: {val_loss:.6f}" if val_loss is not None else ""
                 print(
-                    f"\r[{('█' * int(50 * (epoch + 1) / epochs)).ljust(50,'░')}] - {epoch+1}/{epochs} - {(epoch+1)*100/epochs}% - {(time.time() - now):.2f} s - Loss: {loss:.6f}",
-                    end="",
-                    flush=True,
+                    f"\r[{('█' * int(50 * (epoch + 1) / epochs)).ljust(50,'░')}] "
+                    f"- {epoch+1}/{epochs} - {(epoch+1)*100/epochs:.1f}% "
+                    f"- {(time.time() - now):.2f}s - Training Loss: {loss:.6f}{val_str}",
+                    end="", flush=True
                 )
+
         if self.verbose == 1:
-            print(f"\nLoss: {loss:.6f}")
+            print(f"\nFinal Training Loss: {loss:.6f}")
+            if X_val is not None:
+                print(f"Final Validation Loss: {self.validation_loss_results[-1]:.6f}")
 
     def predict(self, X):
         return np.argmax(self.forward(X)[-1], axis=1)

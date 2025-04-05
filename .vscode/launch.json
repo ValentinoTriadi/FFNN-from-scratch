@@ -4,11 +4,16 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    
     {
       "name": "Main Module",
       "type": "debugpy",
       "request": "launch",
-      "module": "src.main"
+      "program": "${workspaceFolder}/src/main.py",  // or your entry file
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+      }
     },
     {
       "name": "test main",
