@@ -247,12 +247,17 @@ class FFNN:
 
             weight_gradient = (X_with_bias.T @ deltas[i]) / hasil[i].shape[0]
 
-            # L1 
+            #L1
             if self.l1_lambda > 0:
-                weight_gradient += self.l1_lambda * np.sign(self.bobot[i])
-            # L2
+                l1_grad = self.l1_lambda * np.sign(self.bobot[i])
+                l1_grad = np.clip(l1_grad, -0.1, 0.1) 
+                weight_gradient += l1_grad
+
+            #L2
             if self.l2_lambda > 0:
-                weight_gradient += self.l2_lambda * self.bobot[i]
+                l2_grad = self.l2_lambda * self.bobot[i]
+                l2_grad = np.clip(l2_grad, -0.1, 0.1) 
+                weight_gradient += l2_grad
 
             # Update gradien
             gradients.append(weight_gradient)
