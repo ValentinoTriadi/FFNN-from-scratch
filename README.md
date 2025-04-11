@@ -58,6 +58,7 @@
 | Weight Initiation                                          | 13522164                     |
 | Fit, Predict, Save, dan Load                               | 13522164, 13522134, 13522157 |
 | Visualisasi Graf, Distribusi Bobot, dan Distribusi Gradien | 13522157                     |
+| Regularisasi                                               | 13522164, 13522134, 13522157 | 
 
 13522134 - Shabrina Maharani  
 13522157 - Muhammad Davis Adhipramana  
